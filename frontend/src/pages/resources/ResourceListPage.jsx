@@ -13,17 +13,15 @@ const ResourceListPage = () => {
     setResources(res.data);
   };
 
-  useEffect(() => {
-    fetchResources();
-  }, [filters]);
+  useEffect(() => { fetchResources(); }, [filters]);
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Resources</h1>
-
+    <div className="min-h-screen p-6" style={{ background: "#FFF8F3" }}>
+      <h1 className="text-2xl font-medium mb-5" style={{ color: "#7C3B0A" }}>
+        Resources
+      </h1>
       <ResourceFilter setFilters={setFilters} />
-
-      <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {resources.map((r) => (
           <ResourceCard key={r.id} resource={r} />
         ))}
@@ -31,5 +29,4 @@ const ResourceListPage = () => {
     </div>
   );
 };
-
 export default ResourceListPage;
