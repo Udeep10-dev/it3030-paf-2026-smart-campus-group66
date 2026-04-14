@@ -5,6 +5,7 @@ import ResourceListPage from "../pages/resources/ResourceListPage";
 import BookingListPage from "../pages/booking/BookingListPage";
 import TicketListPage from "../pages/tickets/TicketListPage";
 import NotificationPage from "../pages/notifications/NotificationPage";
+import ResourceFormPage from "../pages/resources/ResourceFormPage";
 
 function AppRouter() {
   return (
@@ -15,6 +16,8 @@ function AppRouter() {
       <Route path="/bookings" element={<BookingListPage />} />
       <Route path="/tickets" element={<TicketListPage />} />
       <Route path="/notifications" element={<NotificationPage />} />
+      <Route path="/resources" element={<ResourceListPage />} />
+      <Route path="/resources/new" element={<ResourceFormPage />} />
     </Routes>
   );
 }
