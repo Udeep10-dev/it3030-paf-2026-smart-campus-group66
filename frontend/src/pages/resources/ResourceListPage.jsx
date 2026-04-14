@@ -20,6 +20,7 @@ const ResourceListPage = () => {
       <h1 className="text-2xl font-medium mb-5" style={{ color: "#7C3B0A" }}>
         Resources
       </h1>
+      
       <ResourceFilter setFilters={setFilters} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {resources.map((r) => (
