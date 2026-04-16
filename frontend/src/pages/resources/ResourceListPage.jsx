@@ -5,18 +5,22 @@ import resourceService from "../../services/resourceService";
 
 const ResourceListPage = () => {
   const [resources, setResources] = useState([]);
-
   const [filters, setFilters] = useState({});
 
   const fetchResources = async () => {
-    const res = await resourceService.getAll(filters);
+    let res;
+
+    if (filters && Object.keys(filters).length > 0) {
+      res = await resourceService.filter(filters);
+    } else {
+      res = await resourceService.getAll();
+    }
+
     setResources(res.data);
   };
-
   useEffect(() => {
     fetchResources();
   }, [filters]);
-
 
   return (
     <div className="min-h-screen p-6" style={{ background: "#FFF8F3" }}>
