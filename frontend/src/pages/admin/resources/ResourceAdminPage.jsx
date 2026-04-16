@@ -88,27 +88,18 @@ const ResourceAdminPage = () => {
 
   return (
     <div className="min-h-screen p-6" style={{ background: "#FFF8F3" }}>
-      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-medium" style={{ color: "#7C3B0A" }}>
+          <h1 className="text-2xl font-bold text-orange-900 tracking-tight">
             Resource management
           </h1>
-          <span
-            className="text-xs font-medium px-3 py-1 rounded-full"
-            style={{
-              background: "#FAECE7",
-              color: "#993C1D",
-              border: "0.5px solid #F5C4A0",
-            }}
-          >
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-600 ring-1 ring-red-100">
             Admin
           </span>
         </div>
         <button
           onClick={openAdd}
-          className="h-9 px-4 rounded-lg text-sm font-medium text-white cursor-pointer"
-          style={{ background: "#D85A30" }}
+          className="h-9 px-4 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all cursor-pointer shadow-sm shadow-orange-200"
         >
           + Add resource
         </button>
