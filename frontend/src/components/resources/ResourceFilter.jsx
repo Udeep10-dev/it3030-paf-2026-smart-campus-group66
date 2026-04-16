@@ -7,12 +7,13 @@ const ResourceFilter = ({ setFilters }) => {
   const [location, setLocation] = useState("");
 
   const applyFilters = async () => {
-    const res = await resourceService.filter({
-      type,
-      capacity,
-      location,
-    });
+    const params = {};
 
+    if (type) params.type = type;
+    if (location) params.location = location;
+    if (capacity) params.capacity = capacity;
+
+    const res = await resourceService.filter(params);
     setFilters(res.data);
   };
 

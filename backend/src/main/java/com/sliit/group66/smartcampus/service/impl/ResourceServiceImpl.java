@@ -34,19 +34,16 @@ public class ResourceServiceImpl implements ResourceService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-public List<ResourceDTO> filterResources(String type, String location, Integer capacity) {
+        @Override
+        public List<ResourceDTO> filterResources(String type, String location, Integer capacity) {
 
-    return repository
-            .findByTypeContainingIgnoreCaseAndLocationContainingIgnoreCaseAndCapacityGreaterThanEqual(
-                    type == null ? "" : type,
-                    location == null ? "" : location,
-                    capacity == null ? 0 : capacity
-            )
-            .stream()
-            .map(this::mapToDTO)
-            .collect(Collectors.toList());
-}
+        return repository.findAll().stream()
+                .filter(r -> type == null || type.isEmpty() || r.getType().toLowerCase().contains(type.toLowerCase()))
+                .filter(r -> location == null || location.isEmpty() || r.getLocation().toLowerCase().contains(location.toLowerCase()))
+                .filter(r -> capacity == null || r.getCapacity() >= capacity)
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+        }
 
     @Override
     public ResourceDTO getById(Long id) {
