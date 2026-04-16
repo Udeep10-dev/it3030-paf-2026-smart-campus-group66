@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getResources } from "../../api/resources/resourceApi.js";
 import ResourceCard from "../../components/resources/ResourceCard";
 import ResourceFilter from "../../components/resources/ResourceFilter";
 import { Link } from "react-router-dom";
+import resourceService from "../../services/resourceService";
 
 const ResourceListPage = () => {
   const [resources, setResources] = useState([
@@ -36,7 +36,7 @@ const ResourceListPage = () => {
   const [filters, setFilters] = useState({});
 
   const fetchResources = async () => {
-    const res = await getResources(filters);
+    const res = await resourceService.getAll(filters);
     setResources(res.data);
   };
 
