@@ -6,33 +6,7 @@ import ResourceForm from "../../../components/resources/ResourceForm";
 import DeleteResourceModal from "../../../components/admin/resources/DeleteResourceModal";
 
 const ResourceAdminPage = () => {
-  const [resources, setResources] = useState([
-    {
-      id: "1",
-      title: "React Basics Guide",
-      description:
-        "Learn fundamentals of React including hooks and components.",
-      category: "Programming",
-      type: "PDF",
-      status: "available",
-    },
-    {
-      id: "2",
-      title: "Database Design Notes",
-      description: "Introduction to ER diagrams and normalization.",
-      category: "Database",
-      type: "Document",
-      status: "available",
-    },
-    {
-      id: "3",
-      title: "Java Tutorial",
-      description: "Complete beginner guide for Java programming.",
-      category: "Programming",
-      type: "Video",
-      status: "out of stock",
-    },
-  ]);
+  const [resources, setResources] = useState([]);
   const [filters, setFilters] = useState({});
   const [editingResource, setEditingResource] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
