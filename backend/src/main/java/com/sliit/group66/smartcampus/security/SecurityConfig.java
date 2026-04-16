@@ -1,3 +1,4 @@
+
 package com.sliit.group66.smartcampus.security;
 
 import lombok.RequiredArgsConstructor;
@@ -41,3 +42,4 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
