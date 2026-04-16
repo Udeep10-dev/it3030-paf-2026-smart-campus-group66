@@ -6,4 +6,8 @@ public enum NotificationType {
     TICKET_ASSIGNED,
     TICKET_UPDATED,
     GENERAL
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> feature/member4-auth-notifications
