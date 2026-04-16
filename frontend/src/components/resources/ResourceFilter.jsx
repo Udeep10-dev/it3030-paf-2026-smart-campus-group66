@@ -1,11 +1,20 @@
 import { useState } from "react";
+import resourceService from "../../services/resourceService";
 
 const ResourceFilter = ({ setFilters }) => {
   const [type, setType] = useState("");
   const [capacity, setCapacity] = useState("");
   const [location, setLocation] = useState("");
 
-  const applyFilters = () => setFilters({ type, capacity, location });
+  const applyFilters = async () => {
+    const res = await resourceService.filter({
+      type,
+      capacity,
+      location,
+    });
+
+    setFilters(res.data);
+  };
 
   const inputCls =
     "flex-1 min-w-[120px] h-9 px-3 rounded-lg text-sm bg-orange-50 border border-orange-200 " +

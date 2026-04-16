@@ -25,6 +25,15 @@ public class ResourceController {
         return service.getAll();
     }
 
+    @GetMapping("/filter")
+    public List<ResourceDTO> filterResources(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Integer capacity
+    ) {
+        return service.filterResources(type, location, capacity);
+    }
+
     @GetMapping("/{id}")
     public ResourceDTO getById(@PathVariable Long id) {
         return service.getById(id);

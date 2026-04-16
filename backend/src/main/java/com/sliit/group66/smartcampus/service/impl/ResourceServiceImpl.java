@@ -35,6 +35,20 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+public List<ResourceDTO> filterResources(String type, String location, Integer capacity) {
+
+    return repository
+            .findByTypeContainingIgnoreCaseAndLocationContainingIgnoreCaseAndCapacityGreaterThanEqual(
+                    type == null ? "" : type,
+                    location == null ? "" : location,
+                    capacity == null ? 0 : capacity
+            )
+            .stream()
+            .map(this::mapToDTO)
+            .collect(Collectors.toList());
+}
+
+    @Override
     public ResourceDTO getById(Long id) {
         Resource resource = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
@@ -96,6 +110,7 @@ public class ResourceServiceImpl implements ResourceService {
         );
 
         resource.setDescription(dto.getDescription());
+        resource.setCreatedAt(LocalDateTime.now());
 
         resource.setResourceCode(
                 "RES-" + UUID.randomUUID().toString().substring(0, 8)

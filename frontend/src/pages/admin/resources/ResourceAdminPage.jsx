@@ -21,7 +21,9 @@ const ResourceAdminPage = () => {
     }
   };
 
-    useEffect(() => { fetchResources(); }, [filters]);
+  useEffect(() => {
+    fetchResources();
+  }, [filters]);
 
   const openAdd = () => {
     setEditingResource(null);
@@ -55,6 +57,8 @@ const ResourceAdminPage = () => {
     setDeleteTarget(null);
     fetchResources();
   };
+
+
 
   const openDelete = (resource) => {
     setDeleteTarget(resource);

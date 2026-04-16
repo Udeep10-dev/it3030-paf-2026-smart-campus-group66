@@ -14,4 +14,6 @@ public interface ResourceService {
     ResourceDTO update(Long id, ResourceDTO dto);
 
     void delete(Long id);
+
+    List<ResourceDTO> filterResources(String type, String location, Integer capacity);
 }
