@@ -1,8 +1,12 @@
 import { useState } from "react";
 
 const statusBadge = {
-  ACTIVE:         { bg: "bg-[#EAF3DE]", text: "text-[#3B6D11]", label: "Active" },
-  OUT_OF_SERVICE: { bg: "bg-[#FAECE7]", text: "text-[#993C1D]", label: "Out of service" },
+  ACTIVE: { bg: "bg-[#EAF3DE]", text: "text-[#3B6D11]", label: "Active" },
+  OUT_OF_SERVICE: {
+    bg: "bg-[#FAECE7]",
+    text: "text-[#993C1D]",
+    label: "Out of service",
+  },
 };
 
 const inputCls =
@@ -10,9 +14,18 @@ const inputCls =
   "border border-[#F5C4A0] placeholder:text-[#C2855A] " +
   "focus:outline-none focus:border-[#D85A30] focus:ring-2 focus:ring-[#FAECE7]";
 
-const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false }) => {
+const ResourceForm = ({
+  onSubmit,
+  onCancel,
+  initialData = {},
+  isEditing = false,
+}) => {
   const [form, setForm] = useState({
-    name: "", type: "", capacity: "", location: "", status: "ACTIVE",
+    name: "",
+    type: "",
+    capacity: "",
+    location: "",
+    status: "ACTIVE",
     ...initialData,
   });
 
@@ -23,9 +36,10 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(124, 59, 10, 0.15)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
     >
       <div
         className="bg-white rounded-2xl w-full max-w-lg mx-4 p-6"
@@ -57,7 +71,10 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
         {/* Fields */}
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#8B4513" }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: "#8B4513" }}
+            >
               Resource name
             </label>
             <input
@@ -71,7 +88,10 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: "#8B4513" }}>
+              <label
+                className="block text-xs font-medium mb-1"
+                style={{ color: "#8B4513" }}
+              >
                 Type
               </label>
               <input
@@ -83,7 +103,10 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: "#8B4513" }}>
+              <label
+                className="block text-xs font-medium mb-1"
+                style={{ color: "#8B4513" }}
+              >
                 Capacity
               </label>
               <input
@@ -98,7 +121,10 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#8B4513" }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: "#8B4513" }}
+            >
               Location
             </label>
             <input
@@ -111,7 +137,10 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "#8B4513" }}>
+            <label
+              className="block text-xs font-medium mb-1"
+              style={{ color: "#8B4513" }}
+            >
               Status
             </label>
             <select
@@ -132,12 +161,19 @@ const ResourceForm = ({ onSubmit, onCancel, initialData = {}, isEditing = false 
           </div>
         </div>
 
-        <div className="flex gap-2 mt-5 pt-4" style={{ borderTop: "0.5px solid #FDE8D8" }}>
+        <div
+          className="flex gap-2 mt-5 pt-4"
+          style={{ borderTop: "0.5px solid #FDE8D8" }}
+        >
           <button
             type="button"
             onClick={onCancel}
             className="h-10 px-5 rounded-lg text-sm cursor-pointer"
-            style={{ color: "#8B4513", border: "0.5px solid #F5C4A0", background: "transparent" }}
+            style={{
+              color: "#8B4513",
+              border: "0.5px solid #F5C4A0",
+              background: "transparent",
+            }}
           >
             Cancel
           </button>

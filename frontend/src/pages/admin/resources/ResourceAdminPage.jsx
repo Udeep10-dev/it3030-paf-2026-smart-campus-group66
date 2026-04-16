@@ -3,6 +3,7 @@ import resourceService from "../../../services/resourceService";
 import ResourceFilter from "../../../components/resources/ResourceFilter";
 import ResourceTable from "../../../components/admin/resources/ResourceTable";
 import ResourceForm from "../../../components/resources/ResourceForm";
+import DeleteResourceModal from "../../../components/admin/resources/DeleteResourceModal";
 
 const ResourceAdminPage = () => {
   const [resources, setResources] = useState([
@@ -35,6 +36,7 @@ const ResourceAdminPage = () => {
   const [filters, setFilters] = useState({});
   const [editingResource, setEditingResource] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchResources = async () => {
     try {
@@ -74,6 +76,7 @@ const ResourceAdminPage = () => {
 
   const handleDelete = async (id) => {
     await resourceService.remove(id);
+    setDeleteTarget(null);
     fetchResources();
   };
 
@@ -120,6 +123,14 @@ const ResourceAdminPage = () => {
           isEditing={!!editingResource}
           onSubmit={handleSave}
           onCancel={closeModal}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteResourceModal
+          resource={deleteTarget}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>
