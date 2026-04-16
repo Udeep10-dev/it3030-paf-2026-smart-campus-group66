@@ -1,6 +1,6 @@
 package com.sliit.group66.smartcampus.service;
 
-package com.sliit.group66.smartcampus.dto.ResourceDTO;
+import com.sliit.group66.smartcampus.dto.ResourceDTO;
 import java.util.List;
 
 public interface ResourceService {

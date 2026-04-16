@@ -1,6 +1,6 @@
 package com.sliit.group66.smartcampus.repository;
 
-package com.sliit.group66.smartcampus.entity.Resource;
+import com.sliit.group66.smartcampus.entity.Resource;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
