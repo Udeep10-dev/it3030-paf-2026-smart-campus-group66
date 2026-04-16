@@ -102,7 +102,7 @@ const ResourceAdminPage = () => {
               border: "0.5px solid #F5C4A0",
             }}
           >
-            Admin only
+            Admin
           </span>
         </div>
         <button
