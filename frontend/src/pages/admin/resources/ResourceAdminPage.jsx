@@ -47,7 +47,7 @@ const ResourceAdminPage = () => {
     }
   };
 
-  //   useEffect(() => { fetchResources(); }, [filters]);
+    useEffect(() => { fetchResources(); }, [filters]);
 
   const openAdd = () => {
     setEditingResource(null);
