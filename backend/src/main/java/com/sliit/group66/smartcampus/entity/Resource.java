@@ -1,4 +1,4 @@
-package com.example.resource.entity;
+package com.sliit.group66.smartcampus.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
