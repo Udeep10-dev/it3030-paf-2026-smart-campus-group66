@@ -1,18 +1,22 @@
 import { useState } from "react";
 
 const statusBadge = {
-  ACTIVE: { bg: "bg-[#EAF3DE]", text: "text-[#3B6D11]", label: "Active" },
+  ACTIVE: {
+    badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    dot: "bg-emerald-400",
+    label: "Active",
+  },
   OUT_OF_SERVICE: {
-    bg: "bg-[#FAECE7]",
-    text: "text-[#993C1D]",
+    badge: "bg-red-50 text-red-700 ring-1 ring-red-200",
+    dot: "bg-red-400",
     label: "Out of service",
   },
 };
 
 const inputCls =
-  "w-full h-[38px] px-3 rounded-lg text-sm text-[#5C2E05] bg-[#FFF8F3] " +
-  "border border-[#F5C4A0] placeholder:text-[#C2855A] " +
-  "focus:outline-none focus:border-[#D85A30] focus:ring-2 focus:ring-[#FAECE7]";
+  "w-full h-10 px-3 rounded-xl text-sm text-orange-900 bg-orange-50 border border-orange-200 " +
+  "placeholder:text-orange-300 focus:outline-none focus:border-orange-400 " +
+  "focus:ring-2 focus:ring-orange-200 transition-all";
 
 const ResourceForm = ({
   onSubmit,
@@ -41,19 +45,14 @@ const ResourceForm = ({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div
-        className="bg-white rounded-2xl w-full max-w-lg mx-4 p-6"
-        style={{ border: "0.5px solid #F5C4A0" }}
-      >
-        <div
-          className="flex items-start justify-between mb-5 pb-4"
-          style={{ borderBottom: "0.5px solid #FDE8D8" }}
-        >
+      <div className="bg-white rounded-3xl w-full max-w-lg mx-4 p-6 shadow-xl shadow-orange-100 border border-orange-100">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6 pb-5 border-b border-orange-50">
           <div>
-            <h2 className="text-base font-medium" style={{ color: "#5C2E05" }}>
+            <h2 className="text-base font-bold text-orange-900 tracking-tight">
               {isEditing ? "Edit resource" : "Add new resource"}
             </h2>
-            <p className="text-xs mt-0.5" style={{ color: "#C2855A" }}>
+            <p className="text-xs mt-1 text-orange-400">
               {isEditing
                 ? "Update the resource details below."
                 : "Fill in the details below to register a new resource."}
@@ -61,8 +60,7 @@ const ResourceForm = ({
           </div>
           <button
             onClick={onCancel}
-            className="text-lg leading-none cursor-pointer ml-4 mt-0.5"
-            style={{ color: "#C2855A", background: "none", border: "none" }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-orange-300 hover:text-orange-500 hover:bg-orange-50 transition-all cursor-pointer text-base ml-4"
           >
             ✕
           </button>
@@ -71,10 +69,7 @@ const ResourceForm = ({
         {/* Fields */}
         <div className="space-y-4">
           <div>
-            <label
-              className="block text-xs font-medium mb-1"
-              style={{ color: "#8B4513" }}
-            >
+            <label className="block text-xs font-semibold mb-1.5 text-orange-700">
               Resource name
             </label>
             <input
@@ -88,10 +83,7 @@ const ResourceForm = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                className="block text-xs font-medium mb-1"
-                style={{ color: "#8B4513" }}
-              >
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 Type
               </label>
               <input
@@ -103,10 +95,7 @@ const ResourceForm = ({
               />
             </div>
             <div>
-              <label
-                className="block text-xs font-medium mb-1"
-                style={{ color: "#8B4513" }}
-              >
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 Capacity
               </label>
               <input
@@ -121,10 +110,7 @@ const ResourceForm = ({
           </div>
 
           <div>
-            <label
-              className="block text-xs font-medium mb-1"
-              style={{ color: "#8B4513" }}
-            >
+            <label className="block text-xs font-semibold mb-1.5 text-orange-700">
               Location
             </label>
             <input
@@ -137,10 +123,7 @@ const ResourceForm = ({
           </div>
 
           <div>
-            <label
-              className="block text-xs font-medium mb-1"
-              style={{ color: "#8B4513" }}
-            >
+            <label className="block text-xs font-semibold mb-1.5 text-orange-700">
               Status
             </label>
             <select
@@ -153,35 +136,27 @@ const ResourceForm = ({
               <option value="OUT_OF_SERVICE">Out of service</option>
             </select>
             <span
-              className={`inline-flex items-center gap-1 mt-2 text-xs font-medium px-2.5 py-1 rounded-full ${badge.bg} ${badge.text}`}
+              className={`inline-flex items-center gap-1.5 mt-2 text-xs font-semibold px-2.5 py-1 rounded-full ${badge.badge}`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+              <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
               {badge.label}
             </span>
           </div>
         </div>
 
-        <div
-          className="flex gap-2 mt-5 pt-4"
-          style={{ borderTop: "0.5px solid #FDE8D8" }}
-        >
+        {/* Footer */}
+        <div className="flex gap-2 mt-6 pt-5 border-t border-orange-50">
           <button
             type="button"
             onClick={onCancel}
-            className="h-10 px-5 rounded-lg text-sm cursor-pointer"
-            style={{
-              color: "#8B4513",
-              border: "0.5px solid #F5C4A0",
-              background: "transparent",
-            }}
+            className="h-10 px-5 rounded-xl text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => onSubmit?.(form)}
-            className="flex-1 h-10 rounded-lg text-sm font-medium text-white cursor-pointer"
-            style={{ background: "#D85A30" }}
+            className="flex-1 h-10 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all cursor-pointer shadow-sm shadow-orange-200"
           >
             {isEditing ? "Update resource" : "Save resource"}
           </button>
