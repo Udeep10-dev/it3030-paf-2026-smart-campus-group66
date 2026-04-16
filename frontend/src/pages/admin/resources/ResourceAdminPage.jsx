@@ -5,6 +5,7 @@ import ResourceTable from "../../../components/admin/resources/ResourceTable";
 import ResourceForm from "../../../components/resources/ResourceForm";
 import DeleteResourceModal from "../../../components/admin/resources/DeleteResourceModal";
 
+
 const ResourceAdminPage = () => {
   const [resources, setResources] = useState([]);
   const [filters, setFilters] = useState({});
@@ -14,7 +15,14 @@ const ResourceAdminPage = () => {
 
   const fetchResources = async () => {
     try {
-      const res = await resourceService.getAll(filters);
+      let res;
+
+      if (filters && Object.keys(filters).length > 0) {
+        res = await resourceService.filter(filters);
+      } else {
+        res = await resourceService.getAll();
+      }
+
       setResources(Array.isArray(res.data) ? res.data : (res.data.data ?? []));
     } catch {
       setResources([]);
@@ -57,8 +65,6 @@ const ResourceAdminPage = () => {
     setDeleteTarget(null);
     fetchResources();
   };
-
-
 
   const openDelete = (resource) => {
     setDeleteTarget(resource);

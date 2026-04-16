@@ -1,5 +1,4 @@
 import { useState } from "react";
-import resourceService from "../../services/resourceService";
 
 const ResourceFilter = ({ setFilters }) => {
   const [type, setType] = useState("");
@@ -13,8 +12,7 @@ const ResourceFilter = ({ setFilters }) => {
     if (location) params.location = location;
     if (capacity) params.capacity = capacity;
 
-    const res = await resourceService.filter(params);
-    setFilters(res.data);
+    setFilters(params);
   };
 
   const inputCls =
