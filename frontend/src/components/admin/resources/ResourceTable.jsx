@@ -4,7 +4,7 @@ const statusBadge = {
 };
 
 const ResourceTable = ({ resources, onEdit, onDelete }) => (
-  <div className="bg-white rounded-xl overflow-hidden" style={{ border: "0.5px solid #F5C4A0" }}>
+  <div className="bg-white mt-5 rounded-xl overflow-hidden" style={{ border: "0.5px solid #F5C4A0" }}>
     <div className="flex items-center justify-between px-4 py-3"
       style={{ borderBottom: "0.5px solid #FDE8D8" }}>
       <h2 className="text-sm font-medium" style={{ color: "#5C2E05" }}>All resources</h2>
