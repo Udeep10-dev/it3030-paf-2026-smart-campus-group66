@@ -74,10 +74,16 @@ const ResourceAdminPage = () => {
     fetchResources();
   };
 
-  const handleDelete = async (id) => {
-    await resourceService.remove(id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+
+    await resourceService.delete(deleteTarget.id);
     setDeleteTarget(null);
     fetchResources();
+  };
+
+  const openDelete = (resource) => {
+    setDeleteTarget(resource);
   };
 
   return (
@@ -113,7 +119,7 @@ const ResourceAdminPage = () => {
       <ResourceTable
         resources={resources}
         onEdit={openEdit}
-        onDelete={handleDelete}
+        onDelete={openDelete}
       />
 
       {modalOpen && (
