@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ResourceCard from "../../components/resources/ResourceCard";
 import ResourceFilter from "../../components/resources/ResourceFilter";
-import { Link } from "react-router-dom";
 import resourceService from "../../services/resourceService";
 
 const ResourceListPage = () => {

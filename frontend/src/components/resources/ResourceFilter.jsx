@@ -7,46 +7,31 @@ const ResourceFilter = ({ setFilters }) => {
 
   const applyFilters = () => setFilters({ type, capacity, location });
 
-  const inputStyle = {
-    background: "#FFF8F3",
-    border: "0.5px solid #F5C4A0",
-    color: "#5C2E05",
-    borderRadius: "8px",
-    height: "36px",
-    padding: "0 12px",
-    fontSize: "14px",
-    outline: "none",
-  };
+  const inputCls =
+    "flex-1 min-w-[120px] h-9 px-3 rounded-lg text-sm bg-orange-50 border border-orange-200 " +
+    "text-orange-900 placeholder:text-orange-300 focus:outline-none focus:ring-2 " +
+    "focus:ring-orange-300 focus:border-orange-400 transition-all";
 
   return (
-    <div
-      className="flex flex-wrap gap-3 items-center p-4 rounded-xl"
-      style={{ background: "#fff", border: "0.5px solid #F5C4A0" }}
-    >
+    <div className="flex flex-wrap gap-3 items-center p-4 bg-white rounded-2xl border border-orange-100 shadow-sm">
       <input
         placeholder="Type (e.g. Room)"
-        style={inputStyle}
+        className={inputCls}
         onChange={(e) => setType(e.target.value)}
-        className="flex-1 min-w-[120px] focus:border-orange-500"
       />
       <input
         placeholder="Capacity"
-        style={inputStyle}
+        className={inputCls}
         onChange={(e) => setCapacity(e.target.value)}
-        className="flex-1 min-w-[100px]"
       />
       <input
         placeholder="Location"
-        style={inputStyle}
+        className={inputCls}
         onChange={(e) => setLocation(e.target.value)}
-        className="flex-1 min-w-[120px]"
       />
       <button
         onClick={applyFilters}
-        className="h-9 px-5 rounded-lg text-sm font-medium text-white transition-colors"
-        style={{ background: "#D85A30" }}
-        onMouseEnter={(e) => (e.target.style.background = "#C04A22")}
-        onMouseLeave={(e) => (e.target.style.background = "#D85A30")}
+        className="h-9 px-5 rounded-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all cursor-pointer shadow-sm shadow-orange-200"
       >
         Search
       </button>
