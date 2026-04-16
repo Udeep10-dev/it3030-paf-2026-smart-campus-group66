@@ -1,4 +1,4 @@
-package com.example.resource.enums;
+package com.sliit.group66.smartcampus.enums;
 
 public enum ResourceStatus {
     ACTIVE,

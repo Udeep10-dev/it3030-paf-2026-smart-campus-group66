@@ -1,42 +1,29 @@
-package com.sliit.group66.smartcampus.entity;
-
-import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalTime;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "resources")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
 public class Resource {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "resource_code", unique = true)
     private String resourceCode;
-
-    @Column(nullable = false)
     private String name;
-
-    @Column(nullable = false)
     private String type;
-
     private Integer capacity;
-
-    @Column(nullable = false)
     private String location;
 
     private LocalTime availabilityStart;
     private LocalTime availabilityEnd;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private ResourceStatus status;
 
     private String description;
