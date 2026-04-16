@@ -1,10 +1,10 @@
-package com.example.resource.service.impl;
+package com.sliit.group66.smartcampus.service.impl;
 
-import com.example.resource.dto.ResourceDTO;
-import com.example.resource.entity.Resource;
-import com.example.resource.enums.ResourceStatus;
-import com.example.resource.repository.ResourceRepository;
-import com.example.resource.service.ResourceService;
+import com.sliit.group66.smartcampus.dto.ResourceDTO;
+import com.sliit.group66.smartcampus.entity.Resource;
+import com.sliit.group66.smartcampus.enums.ResourceStatus;
+import com.sliit.group66.smartcampus.repository.ResourceRepository;
+import com.sliit.group66.smartcampus.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

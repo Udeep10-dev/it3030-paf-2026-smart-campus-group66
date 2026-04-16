@@ -1,7 +1,7 @@
-package com.example.resource.controller;
+package com.sliit.group66.smartcampus.controller;
 
-import com.example.resource.dto.ResourceDTO;
-import com.example.resource.service.ResourceService;
+package com.sliit.group66.smartcampus.dto.ResourceDTO;
+import com.sliit.group66.smartcampus.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
