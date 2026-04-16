@@ -1,6 +1,11 @@
-import lombok.*;
+package com.sliit.group66.smartcampus.entity;
+
+import com.sliit.group66.smartcampus.enums.ResourceStatus;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @Setter
