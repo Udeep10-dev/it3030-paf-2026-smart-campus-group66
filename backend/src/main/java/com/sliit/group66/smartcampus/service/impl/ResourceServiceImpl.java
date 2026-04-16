@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,29 +21,9 @@ public class ResourceServiceImpl implements ResourceService {
     private final ResourceRepository repository;
 
     @Override
-    public Resource mapToEntity(ResourceDTO dto) {
-        Resource resource = new Resource();
-
-        resource.setName(dto.getName());
-        resource.setType(dto.getType());
-        resource.setCapacity(dto.getCapacity());
-        resource.setLocation(dto.getLocation());
-        resource.setAvailabilityStart(
-            dto.getAvailabilityStart() != null ? dto.getAvailabilityStart() : LocalTime.of(8, 0)
-        );
-        resource.setAvailabilityEnd(
-            dto.getAvailabilityEnd() != null ? dto.getAvailabilityEnd() : LocalTime.of(17, 0)
-        );
-        resource.setStatus(
-            dto.getStatus() != null
-                ? ResourceStatus.valueOf(dto.getStatus().toUpperCase())
-                : ResourceStatus.ACTIVE
-        );
-
-        resource.setDescription(dto.getDescription());
-        resource.setResourceCode("RES-" + UUID.randomUUID().toString().substring(0, 8));
-
-        return resource;
+    public ResourceDTO create(ResourceDTO dto) {
+        Resource resource = mapToEntity(dto);
+        return mapToDTO(repository.save(resource));
     }
 
     @Override
@@ -68,7 +50,13 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setType(dto.getType());
         resource.setCapacity(dto.getCapacity());
         resource.setLocation(dto.getLocation());
-        resource.setStatus(ResourceStatus.valueOf(dto.getStatus()));
+
+        resource.setStatus(
+                dto.getStatus() != null
+                        ? ResourceStatus.valueOf(dto.getStatus().toUpperCase())
+                        : resource.getStatus()
+        );
+
         resource.setDescription(dto.getDescription());
         resource.setUpdatedAt(LocalDateTime.now());
 
@@ -80,8 +68,43 @@ public class ResourceServiceImpl implements ResourceService {
         repository.deleteById(id);
     }
 
+    private Resource mapToEntity(ResourceDTO dto) {
 
+        Resource resource = new Resource();
+
+        resource.setName(dto.getName());
+        resource.setType(dto.getType());
+        resource.setCapacity(dto.getCapacity());
+        resource.setLocation(dto.getLocation());
+
+        resource.setAvailabilityStart(
+                dto.getAvailabilityStart() != null
+                        ? dto.getAvailabilityStart()
+                        : LocalTime.of(8, 0)
+        );
+
+        resource.setAvailabilityEnd(
+                dto.getAvailabilityEnd() != null
+                        ? dto.getAvailabilityEnd()
+                        : LocalTime.of(17, 0)
+        );
+
+        resource.setStatus(
+                dto.getStatus() != null
+                        ? ResourceStatus.valueOf(dto.getStatus().toUpperCase())
+                        : ResourceStatus.AVAILABLE
+        );
+
+        resource.setDescription(dto.getDescription());
+
+        resource.setResourceCode(
+                "RES-" + UUID.randomUUID().toString().substring(0, 8)
+        );
+
+        return resource;
+    }
     private ResourceDTO mapToDTO(Resource resource) {
+
         return ResourceDTO.builder()
                 .id(resource.getId())
                 .resourceCode(resource.getResourceCode())
@@ -93,20 +116,6 @@ public class ResourceServiceImpl implements ResourceService {
                 .availabilityEnd(resource.getAvailabilityEnd())
                 .status(resource.getStatus().name())
                 .description(resource.getDescription())
-                .build();
-    }
-
-    private Resource mapToEntity(ResourceDTO dto) {
-        return Resource.builder()
-                .resourceCode(dto.getResourceCode())
-                .name(dto.getName())
-                .type(dto.getType())
-                .capacity(dto.getCapacity())
-                .location(dto.getLocation())
-                .availabilityStart(dto.getAvailabilityStart())
-                .availabilityEnd(dto.getAvailabilityEnd())
-                .status(ResourceStatus.valueOf(dto.getStatus()))
-                .description(dto.getDescription())
                 .build();
     }
 }
