@@ -19,12 +19,29 @@ public class ResourceServiceImpl implements ResourceService {
     private final ResourceRepository repository;
 
     @Override
-    public ResourceDTO create(ResourceDTO dto) {
-        Resource resource = mapToEntity(dto);
-        resource.setCreatedAt(LocalDateTime.now());
-        resource.setUpdatedAt(LocalDateTime.now());
+    public Resource mapToEntity(ResourceDTO dto) {
+        Resource resource = new Resource();
 
-        return mapToDTO(repository.save(resource));
+        resource.setName(dto.getName());
+        resource.setType(dto.getType());
+        resource.setCapacity(dto.getCapacity());
+        resource.setLocation(dto.getLocation());
+        resource.setAvailabilityStart(
+            dto.getAvailabilityStart() != null ? dto.getAvailabilityStart() : LocalTime.of(8, 0)
+        );
+        resource.setAvailabilityEnd(
+            dto.getAvailabilityEnd() != null ? dto.getAvailabilityEnd() : LocalTime.of(17, 0)
+        );
+        resource.setStatus(
+            dto.getStatus() != null
+                ? ResourceStatus.valueOf(dto.getStatus().toUpperCase())
+                : ResourceStatus.ACTIVE
+        );
+
+        resource.setDescription(dto.getDescription());
+        resource.setResourceCode("RES-" + UUID.randomUUID().toString().substring(0, 8));
+
+        return resource;
     }
 
     @Override
