@@ -18,7 +18,6 @@ const ResourceCard = ({ resource }) => {
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-stone-100 hover:border-stone-300 hover:shadow-md shadow-sm transition-all duration-200 cursor-pointer group">
-      {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-stone-100 flex items-center justify-center group-hover:bg-orange-50 transition-colors">
@@ -57,10 +56,8 @@ const ResourceCard = ({ resource }) => {
         </span>
       </div>
 
-      {/* Divider */}
       <div className="border-t border-stone-100 mb-3" />
 
-      {/* Details */}
       <div className="space-y-2">
         {[
           ["Type", resource.type],
