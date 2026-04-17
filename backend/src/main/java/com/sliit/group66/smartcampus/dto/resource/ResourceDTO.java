@@ -16,7 +16,10 @@ public class ResourceDTO {
     private String type;
     private Integer capacity;
     private String location;
+    @Column(nullable = true)
     private LocalTime availabilityStart;
+
+    @Column(nullable = true)
     private LocalTime availabilityEnd;
     private String status;
     private String description;

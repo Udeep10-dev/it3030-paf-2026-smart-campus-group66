@@ -144,7 +144,7 @@ const ResourceForm = ({
               {badge.label}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          {/* <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 Start Time
@@ -170,7 +170,7 @@ const ResourceForm = ({
                 className={inputCls}
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

@@ -88,17 +88,8 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setCapacity(dto.getCapacity());
         resource.setLocation(dto.getLocation());
 
-        resource.setAvailabilityStart(
-                dto.getAvailabilityStart() != null
-                        ? dto.getAvailabilityStart()
-                        : LocalTime.of(8, 0)
-        );
-
-        resource.setAvailabilityEnd(
-                dto.getAvailabilityEnd() != null
-                        ? dto.getAvailabilityEnd()
-                        : LocalTime.of(17, 0)
-        );
+        resource.setAvailabilityStart(dto.getAvailabilityStart());
+        resource.setAvailabilityEnd(dto.getAvailabilityEnd());
 
         resource.setStatus(
                 dto.getStatus() != null
