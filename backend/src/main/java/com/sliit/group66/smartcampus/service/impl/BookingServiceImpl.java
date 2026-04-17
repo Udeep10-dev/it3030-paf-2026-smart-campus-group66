@@ -23,6 +23,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse createBooking(BookingCreateRequest req) {
         Booking booking = new Booking();
         booking.setResourceId(req.resourceId);
+        booking.setUserId(1L);
         booking.setBookingDate(req.bookingDate);
         booking.setStartTime(req.startTime);
         booking.setEndTime(req.endTime);
