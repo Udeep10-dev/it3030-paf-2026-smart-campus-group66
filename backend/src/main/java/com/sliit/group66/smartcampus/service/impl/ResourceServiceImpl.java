@@ -1,6 +1,6 @@
 package com.sliit.group66.smartcampus.service.impl;
 
-import com.sliit.group66.smartcampus.dto.ResourceDTO;
+import com.sliit.group66.smartcampus.dto.resource.ResourceDTO;
 import com.sliit.group66.smartcampus.entity.Resource;
 import com.sliit.group66.smartcampus.enums.ResourceStatus;
 import com.sliit.group66.smartcampus.repository.ResourceRepository;

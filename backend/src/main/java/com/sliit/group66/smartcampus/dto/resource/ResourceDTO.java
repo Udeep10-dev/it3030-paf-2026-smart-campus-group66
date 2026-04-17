@@ -1,4 +1,4 @@
-package com.sliit.group66.smartcampus.dto;
+package com.sliit.group66.smartcampus.dto.resource;
 
 import lombok.*;
 import java.time.LocalTime;
