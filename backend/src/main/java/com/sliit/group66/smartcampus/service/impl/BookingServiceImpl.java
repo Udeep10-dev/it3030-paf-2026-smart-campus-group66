@@ -1,3 +1,15 @@
+package com.sliit.group66.smartcampus.service.impl;
+
+import com.sliit.group66.smartcampus.dto.booking.BookingCreateRequest;
+import com.sliit.group66.smartcampus.dto.booking.BookingResponse;
+import com.sliit.group66.smartcampus.entity.Booking;
+import com.sliit.group66.smartcampus.enums.BookingStatus;
+import com.sliit.group66.smartcampus.repository.BookingRepository;
+import com.sliit.group66.smartcampus.service.BookingService;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.stereotype.Service;
+
 @Service
 public class BookingServiceImpl implements BookingService {
 
@@ -32,6 +44,14 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(id).orElseThrow();
         booking.setStatus(BookingStatus.REJECTED);
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    public List<BookingResponse> getBookingsByStatus(BookingStatus status) {
+        return bookingRepository.findByStatus(status)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     private BookingResponse mapToResponse(Booking b) {
