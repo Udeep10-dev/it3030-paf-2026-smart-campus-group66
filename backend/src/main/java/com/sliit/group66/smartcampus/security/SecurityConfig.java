@@ -8,10 +8,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-<<<<<<< HEAD
-=======
-import org.springframework.security.web.AuthenticationEntryPoint;
->>>>>>> feature/member4-auth-notifications
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration

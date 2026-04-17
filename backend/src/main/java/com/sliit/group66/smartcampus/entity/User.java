@@ -2,19 +2,12 @@ package com.sliit.group66.smartcampus.entity;
 
 import com.sliit.group66.smartcampus.enums.UserRole;
 import jakarta.persistence.*;
-<<<<<<< HEAD
-import lombok.Data;
-import java.time.LocalDateTime;
-
-@Data
-=======
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
->>>>>>> feature/member4-auth-notifications
 @Entity
 @Table(name = "users")
 public class User {
