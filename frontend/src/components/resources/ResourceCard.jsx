@@ -1,15 +1,13 @@
 const statusStyles = {
-  available: {
+  ACTIVE: {
     badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
     dot: "bg-emerald-400",
+    label: "Active",
   },
-  booked: {
-    badge: "bg-sky-50 text-sky-700 ring-1 ring-sky-200",
-    dot: "bg-sky-400",
-  },
-  maintenance: {
-    badge: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-    dot: "bg-amber-400",
+  OUT_OF_SERVICE: {
+    badge: "bg-red-50 text-red-700 ring-1 ring-red-200",
+    dot: "bg-red-400",
+    label: "Out of Service",
   },
 };
 
@@ -91,8 +89,10 @@ const icons = {
 };
 
 const ResourceCard = ({ resource, onBook }) => {
-  const badge = statusStyles[resource.status] || statusStyles.available;
-  const isAvailable = resource.status === "AVAILABLE";
+  const normalizedStatus =
+    resource.status === "AVAILABLE" ? "ACTIVE" : "OUT_OF_SERVICE";
+  const badge = statusStyles[normalizedStatus];
+  const isAvailable = normalizedStatus === "ACTIVE";
 
   return (
     <div className="bg-white rounded-2xl border border-stone-100 hover:border-stone-200 hover:shadow-lg shadow-sm transition-all duration-200 cursor-pointer group overflow-hidden">
@@ -138,7 +138,7 @@ const ResourceCard = ({ resource, onBook }) => {
             className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${badge.badge}`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-            {resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
+            {badge.label}
           </span>
         </div>
 
@@ -171,11 +171,7 @@ const ResourceCard = ({ resource, onBook }) => {
                 : "bg-stone-100 text-stone-400 cursor-not-allowed"
             }`}
             >
-              {isAvailable
-                ? "Book now"
-                : resource.status === "booked"
-                  ? "Already booked"
-                  : "Unavailable"}
+              {isAvailable ? "Book now" : "Unavailable"}
             </button>
           </div>
         </div>
