@@ -1,19 +1,27 @@
-import axios from "axios";
+import api from "../api/axios.js";
 
-const API_URL = "/api/bookings";
+const API_URL = "/bookings";
+
+const toCreatePayload = (data) => ({
+  resourceId: Number(data.resourceId),
+  bookingDate: data.bookingDate,
+  startTime: data.startTime,
+  endTime: data.endTime,
+  purpose: (data.purpose || "").trim(),
+});
 
 export const createBooking = (data) => {
-  return axios.post(API_URL, data);
+  return api.post(API_URL, toCreatePayload(data));
 };
 
 export const getBookingsByStatus = (status) => {
-  return axios.get(`${API_URL}?status=${status}`);
+  return api.get(API_URL, { params: { status } });
 };
 
 export const approveBooking = (id) => {
-  return axios.put(`${API_URL}/${id}/approve`);
+  return api.put(`${API_URL}/${id}/approve`);
 };
 
 export const rejectBooking = (id, reason) => {
-  return axios.put(`${API_URL}/${id}/reject`, { reason });
+  return api.put(`${API_URL}/${id}/reject`, { reason });
 };
