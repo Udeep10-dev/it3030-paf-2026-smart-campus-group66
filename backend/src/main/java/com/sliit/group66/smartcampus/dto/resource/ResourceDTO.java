@@ -1,4 +1,4 @@
-package com.sliit.group66.smartcampus.dto;
+package com.sliit.group66.smartcampus.dto.resource;
 
 import lombok.*;
 import java.time.LocalTime;
@@ -16,11 +16,11 @@ public class ResourceDTO {
     private String type;
     private Integer capacity;
     private String location;
-    @Column(nullable = true)
+    
+    // DTO එකක් නිසා මෙතනට @Column අවශ්‍ය නැත
     private LocalTime availabilityStart;
-
-    @Column(nullable = true)
     private LocalTime availabilityEnd;
+    
     private String status;
     private String description;
 }
