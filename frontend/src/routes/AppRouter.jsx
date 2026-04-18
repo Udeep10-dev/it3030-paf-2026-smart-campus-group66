@@ -26,6 +26,7 @@ function AppRouter() {
 
       {/* Bookings */}
       <Route path="/bookings/new" element={<BookingFormPage />} />
+      <Route path="/booking/new" element={<BookingFormPage />} />
       <Route path="/admin/bookings" element={<BookingListPage />} />
 
       {/* Other */}
