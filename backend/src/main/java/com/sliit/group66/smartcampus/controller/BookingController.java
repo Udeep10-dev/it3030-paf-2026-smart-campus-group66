@@ -42,6 +42,11 @@ public class BookingController {
         return bookingService.reject(id, req.reason);
     }
 
+    @PutMapping("/{id}/cancel")
+    public BookingResponse cancel(@PathVariable Long id) {
+        return bookingService.cancel(id);
+    }
+
     @GetMapping
     public List<BookingResponse> list(@RequestParam BookingStatus status) {
         return bookingService.getBookingsByStatus(status);

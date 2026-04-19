@@ -13,5 +13,7 @@ public interface BookingService {
 
     BookingResponse reject(Long bookingId, String reason);
 
+    BookingResponse cancel(Long bookingId);
+
     List<BookingResponse> getBookingsByStatus(BookingStatus status);
 }

@@ -2,14 +2,33 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getBookingsByStatus,
   approveBooking,
-  rejectBooking
+  rejectBooking,
+  cancelBooking
 } from "../../services/bookingService";
 import "./BookingPages.css";
+
+const CANCELLED_BOOKING_IDS_KEY = "adminCancelledBookingIds";
+
+const getStoredCancelledIds = () => {
+  try {
+    const raw = window.localStorage.getItem(CANCELLED_BOOKING_IDS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+  } catch {
+    return [];
+  }
+};
 
 const STATUS_TABS = [
   { key: "PENDING", label: "Pending" },
   { key: "APPROVED", label: "Approved" },
   { key: "REJECTED", label: "Rejected" },
+  { key: "CANCELLED", label: "Cancelled" },
 ];
 
 function BookingListPage() {
@@ -20,6 +39,7 @@ function BookingListPage() {
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [keywordFilter, setKeywordFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [cancelledBookingIds, setCancelledBookingIds] = useState(getStoredCancelledIds);
 
   const filteredBookings = useMemo(() => {
     const keyword = keywordFilter.trim().toLowerCase();
@@ -37,11 +57,37 @@ function BookingListPage() {
     });
   }, [bookings, keywordFilter, dateFilter]);
 
-  const loadBookings = async (status = statusFilter) => {
+  useEffect(() => {
+    window.localStorage.setItem(CANCELLED_BOOKING_IDS_KEY, JSON.stringify(cancelledBookingIds));
+  }, [cancelledBookingIds]);
+
+  const loadBookings = async (status = statusFilter, cancelledIds = cancelledBookingIds) => {
     setLoading(true);
     setError(null);
 
     try {
+      if (status === "CANCELLED") {
+        const [cancelledRes, rejectedRes] = await Promise.all([
+          getBookingsByStatus("CANCELLED"),
+          getBookingsByStatus("REJECTED"),
+        ]);
+
+        const cancelledRows = Array.isArray(cancelledRes?.data) ? cancelledRes.data : [];
+        const rejectedRows = Array.isArray(rejectedRes?.data) ? rejectedRes.data : [];
+        const cancelledIdSet = new Set(cancelledIds);
+
+        const fallbackCancelledRows = rejectedRows.filter((booking) =>
+          cancelledIdSet.has(Number(booking.id))
+        );
+
+        const merged = [...cancelledRows, ...fallbackCancelledRows].filter(
+          (booking, index, arr) => arr.findIndex((item) => item.id === booking.id) === index
+        );
+
+        setBookings(merged);
+        return;
+      }
+
       const res = await getBookingsByStatus(status);
 
       if (Array.isArray(res.data)) {
@@ -61,7 +107,7 @@ function BookingListPage() {
 
   useEffect(() => {
     loadBookings(statusFilter);
-  }, [statusFilter]);
+  }, [statusFilter, cancelledBookingIds]);
 
   const handleApprove = async (bookingId) => {
     try {
@@ -89,6 +135,36 @@ function BookingListPage() {
     } catch (err) {
       console.error(err);
       setError("Failed to reject booking");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleCancel = async (bookingId) => {
+    const confirmed = window.confirm("Cancel this approved booking?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoadingId(bookingId);
+      setError(null);
+      const res = await cancelBooking(bookingId);
+      const nextStatus = res?.data?.status;
+      if (nextStatus && nextStatus !== "CANCELLED") {
+        console.warn("Cancel action returned unexpected status:", nextStatus);
+      }
+      const numericBookingId = Number(bookingId);
+      const nextCancelledIds = cancelledBookingIds.includes(numericBookingId)
+        ? cancelledBookingIds
+        : [...cancelledBookingIds, numericBookingId];
+      setCancelledBookingIds(nextCancelledIds);
+      setStatusFilter("CANCELLED");
+      await loadBookings("CANCELLED", nextCancelledIds);
+    } catch (err) {
+      console.error(err);
+      const backendMessage = err?.response?.data?.message;
+      setError(backendMessage || "Failed to cancel booking");
     } finally {
       setActionLoadingId(null);
     }
@@ -192,6 +268,18 @@ function BookingListPage() {
                       disabled={actionLoadingId === booking.id}
                     >
                       {actionLoadingId === booking.id ? "Processing..." : "Reject"}
+                    </button>
+                  </div>
+                ) : null}
+
+                {statusFilter === "APPROVED" ? (
+                  <div className="booking-actions">
+                    <button
+                      onClick={() => handleCancel(booking.id)}
+                      className="booking-warning-btn"
+                      disabled={actionLoadingId === booking.id}
+                    >
+                      {actionLoadingId === booking.id ? "Processing..." : "Cancel"}
                     </button>
                   </div>
                 ) : null}

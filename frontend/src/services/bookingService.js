@@ -26,3 +26,13 @@ export const approveBooking = (id) => {
 export const rejectBooking = (id, reason) => {
   return api.put(`${API_URL}/${id}/reject`, { reason });
 };
+
+export const cancelBooking = (id) => {
+  return api.put(`${API_URL}/${id}/cancel`).catch((error) => {
+    const status = error?.response?.status;
+    if (status === 404 || status === 405) {
+      return api.put(`${API_URL}/${id}/reject`, { reason: "Cancelled by admin" });
+    }
+    throw error;
+  });
+};
