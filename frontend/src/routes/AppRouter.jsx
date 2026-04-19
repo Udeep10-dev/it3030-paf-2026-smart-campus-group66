@@ -7,6 +7,7 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import ResourceListPage from "../pages/resources/ResourceListPage";
 // import ResourceFormPage from "../pages/resources/ResourceFormPage";
 import ResourceAdminPage from "../pages/admin/resources/ResourceAdminPage";
+import ResourceMapPage from "../pages/resources/ResourceMapPage";
 
 import BookingFormPage from "../pages/booking/BookingFormPage";
 import BookingListPage from "../pages/booking/BookingListPage";
@@ -35,8 +36,7 @@ function AppRouter() {
       />
       {/* Resources */}
       <Route path="/resources" element={<ResourceListPage />} />
-      <Route path="/resources/map" element={<ResourceMap />} />
-
+      <Route path="/resources/map" element={<ResourceMapPage />} />
       <Route path="/admin/resources" element={<ResourceAdminPage />} />
 
       <Route
