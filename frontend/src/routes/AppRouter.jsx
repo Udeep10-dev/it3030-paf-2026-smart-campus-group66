@@ -15,7 +15,6 @@ import TicketListPage from "../pages/tickets/TicketListPage";
 import NotificationPage from "../pages/notifications/NotificationPage";
 import AdminNotificationPage from "../pages/notifications/AdminNotificationPage";
 
-
 function AppRouter() {
   return (
     <Routes>
@@ -23,7 +22,7 @@ function AppRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      {/* All logged-in users */}
+      {/* All authenticated users */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <DashboardPage />
@@ -41,11 +40,6 @@ function AppRouter() {
           <ResourceListPage />
         </ProtectedRoute>
       } />
-      <Route path="/resources/new" element={
-        <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
-          <ResourceFormPage />
-        </ProtectedRoute>
-      } />
       <Route path="/bookings/new" element={
         <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
           <BookingFormPage />
@@ -57,6 +51,13 @@ function AppRouter() {
         </ProtectedRoute>
       } />
 
+      {/* Staff + Admin only */}
+      <Route path="/resources/new" element={
+        <ProtectedRoute allowedRoles={["STAFF", "ADMIN"]}>
+          <ResourceFormPage />
+        </ProtectedRoute>
+      } />
+
       {/* Admin only */}
       <Route path="/admin/resources" element={
         <ProtectedRoute allowedRoles={["ADMIN"]}>
@@ -64,7 +65,7 @@ function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/admin/bookings" element={
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
+        <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
           <BookingListPage />
         </ProtectedRoute>
       } />
@@ -73,6 +74,9 @@ function AppRouter() {
           <AdminNotificationPage />
         </ProtectedRoute>
       } />
+
+      {/* Catch-all */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }

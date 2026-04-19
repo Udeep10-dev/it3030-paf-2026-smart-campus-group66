@@ -14,8 +14,7 @@ function ProtectedRoute({ children, allowedRoles = [] }) {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    // redirect to their own home based on role
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role?.toUpperCase?.())) {
     if (user.role === "ADMIN") return <Navigate to="/admin/notifications" replace />;
     if (user.role === "STAFF") return <Navigate to="/tickets" replace />;
     return <Navigate to="/dashboard" replace />;
