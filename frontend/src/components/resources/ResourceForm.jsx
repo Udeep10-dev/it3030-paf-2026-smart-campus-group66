@@ -29,6 +29,7 @@ const ResourceForm = ({
     type: "",
     capacity: "",
     location: "",
+    category: "",
     status: "AVAILABLE",
     availabilityStart: "",
     availabilityEnd: "",
@@ -111,17 +112,37 @@ const ResourceForm = ({
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold mb-1.5 text-orange-700">
-              Location
-            </label>
-            <input
-              name="location"
-              placeholder="e.g. Floor 3, Block B"
-              value={form.location}
-              onChange={handleChange}
-              className={inputCls}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
+                Location
+              </label>
+              <input
+                name="location"
+                placeholder="e.g. Floor 3, Block B"
+                value={form.location}
+                onChange={handleChange}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
+                Category
+              </label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className={inputCls + " cursor-pointer appearance-none"}
+              >
+                <option value="">Select category</option>
+                <option value="Lecture halls"> Lecture halls</option>
+                <option value="Labs">Labs</option>
+                <option value="Meeting rooms">Meeting rooms</option>
+                <option value="Equipment">Equipment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -144,7 +165,10 @@ const ResourceForm = ({
               {badge.label}
             </span>
           </div>
-          {/* <div className="grid grid-cols-2 gap-3">
+
+          
+          {/*
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 Start Time
@@ -157,7 +181,6 @@ const ResourceForm = ({
                 className={inputCls}
               />
             </div>
-
             <div>
               <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 End Time
@@ -170,7 +193,8 @@ const ResourceForm = ({
                 className={inputCls}
               />
             </div>
-          </div> */}
+          </div>
+          */}
         </div>
 
         {/* Footer */}

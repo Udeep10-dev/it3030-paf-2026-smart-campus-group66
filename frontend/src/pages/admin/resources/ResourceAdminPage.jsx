@@ -49,6 +49,7 @@ const ResourceAdminPage = () => {
   };
 
   const handleSave = async (form) => {
+    
     if (editingResource) {
       await resourceService.update(editingResource.id, form);
     } else {
