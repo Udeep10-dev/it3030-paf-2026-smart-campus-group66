@@ -13,6 +13,7 @@ import BookingListPage from "../pages/booking/BookingListPage";
 import TicketListPage from "../pages/tickets/TicketListPage";
 import NotificationPage from "../pages/notifications/NotificationPage";
 
+
 function AppRouter() {
   return (
     <Routes>
@@ -21,7 +22,6 @@ function AppRouter() {
 
       {/* Resources */}
       <Route path="/resources" element={<ResourceListPage />} />
-      <Route path="/resources/new" element={<ResourceFormPage />} />
       <Route path="/admin/resources" element={<ResourceAdminPage />} />
 
       {/* Bookings */}

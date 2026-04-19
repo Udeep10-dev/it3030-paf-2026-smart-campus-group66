@@ -7,7 +7,8 @@ const resourceService = {
   getById:   (id)         => api.get(`${BASE}/${id}`),
   create:    (data)       => api.post(BASE, data),
   update:    (id, data)   => api.put(`${BASE}/${id}`, data),
-  remove:    (id)         => api.delete(`${BASE}/${id}`),
+  delete:    (id)         => api.delete(`${BASE}/${id}`),
+  filter: (filters) => api.get(`${BASE}/filter`, { params: filters }),
 };
 
 export default resourceService;

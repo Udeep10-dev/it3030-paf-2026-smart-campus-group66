@@ -1,10 +1,10 @@
 const statusConfig = {
-  ACTIVE: {
+  AVAILABLE: {
     dot: "bg-emerald-400",
     badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
     label: "Active",
   },
-  OUT_OF_SERVICE: {
+  BOOKED: {
     dot: "bg-red-400",
     badge: "bg-red-50 text-red-700 ring-1 ring-red-200",
     label: "Out of service",
@@ -54,7 +54,7 @@ const ResourceTable = ({ resources, onEdit, onDelete }) => (
             </tr>
           ) : (
             resources.map((r) => {
-              const b = statusConfig[r.status] || statusConfig.ACTIVE;
+              const b = statusConfig[r.status] || statusConfig.AVAILABLE;
               return (
                 <tr
                   key={r.id}

@@ -25,17 +25,40 @@ public class ResourceController {
         return service.getAll();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/filter")
+    public List<ResourceDTO> filterResources(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String capacity
+    ) {
+        Integer cap = null;
+
+        System.out.println("Filtering resources with - Type: " + type +
+                ", Location: " + location +
+                ", Capacity: " + capacity);
+
+        try {
+            if (capacity != null && !capacity.trim().isEmpty()) {
+                cap = Integer.parseInt(capacity.trim());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid capacity value");
+        }
+
+        return service.filterResources(type, location, cap);
+    }
+
+    @GetMapping("/{id:\\d+}")
     public ResourceDTO getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResourceDTO update(@PathVariable Long id, @RequestBody ResourceDTO dto) {
         return service.update(id, dto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }

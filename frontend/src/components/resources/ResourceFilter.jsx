@@ -5,7 +5,15 @@ const ResourceFilter = ({ setFilters }) => {
   const [capacity, setCapacity] = useState("");
   const [location, setLocation] = useState("");
 
-  const applyFilters = () => setFilters({ type, capacity, location });
+  const applyFilters = async () => {
+    const params = {};
+
+    if (type) params.type = type;
+    if (location) params.location = location;
+    if (capacity) params.capacity = capacity;
+
+    setFilters(params);
+  };
 
   const inputCls =
     "flex-1 min-w-[120px] h-9 px-3 rounded-lg text-sm bg-orange-50 border border-orange-200 " +
