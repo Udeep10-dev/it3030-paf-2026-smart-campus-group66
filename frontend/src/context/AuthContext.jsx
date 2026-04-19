@@ -44,9 +44,8 @@ export function AuthProvider({ children }) {
             const intent = sessionStorage.getItem("loginIntent");
             sessionStorage.removeItem("loginIntent");
 
-            // warn if wrong account type used
             if (intent === "admin" && role !== "ADMIN") {
-              setError("This account does not have admin access. Please use your SLIIT admin account.");
+              setError("This account does not have admin access.");
               localStorage.removeItem("token");
               setLoading(false);
               return;

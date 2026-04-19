@@ -9,6 +9,7 @@ function TicketListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("my");
   const [filters, setFilters] = useState({
     status: "",
     priority: "",
@@ -19,15 +20,14 @@ function TicketListPage() {
     setError("");
 
     try {
-      const params = {};
-      if (filters.status) params.status = filters.status;
-      if (filters.priority) params.priority = filters.priority;
-
-      const res = await ticketService.getAll(params);
+      const res =
+        viewMode === "my"
+          ? await ticketService.getMyTickets()
+          : await ticketService.getAll();
       setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
-      setError("Failed to load tickets.");
+      setError(err?.response?.data?.message || "Failed to load tickets.");
       setTickets([]);
     } finally {
       setLoading(false);
@@ -36,22 +36,28 @@ function TicketListPage() {
 
   useEffect(() => {
     fetchTickets();
-  }, [filters.status, filters.priority]);
+  }, [viewMode]);
 
   const filteredTickets = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
-    if (!term) return tickets;
-
     return tickets.filter((ticket) => {
-      return (
+      const matchesSearch =
+        !term ||
         ticket.ticketNumber?.toLowerCase().includes(term) ||
         ticket.category?.toLowerCase().includes(term) ||
         ticket.location?.toLowerCase().includes(term) ||
-        ticket.description?.toLowerCase().includes(term)
-      );
+        ticket.description?.toLowerCase().includes(term);
+
+      const matchesStatus =
+        !filters.status || ticket.status === filters.status;
+
+      const matchesPriority =
+        !filters.priority || ticket.priority === filters.priority;
+
+      return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [tickets, searchTerm]);
+  }, [tickets, searchTerm, filters.priority, filters.status]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -79,12 +85,39 @@ function TicketListPage() {
             </p>
           </div>
 
-          <Link
-            to="/tickets/new"
-            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02]"
-          >
-            + Create Ticket
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setViewMode("my")}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  viewMode === "my"
+                    ? "bg-[#123A7A] text-white"
+                    : "text-slate-600"
+                }`}
+              >
+                My Tickets
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("all")}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  viewMode === "all"
+                    ? "bg-[#123A7A] text-white"
+                    : "text-slate-600"
+                }`}
+              >
+                All Tickets
+              </button>
+            </div>
+
+            <Link
+              to="/tickets/new"
+              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02]"
+            >
+              + Create Ticket
+            </Link>
+          </div>
         </div>
 
         <TicketFilters

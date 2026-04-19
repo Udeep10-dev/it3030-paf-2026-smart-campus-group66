@@ -6,11 +6,15 @@ import "./styles/app.css";
 
 function App() {
   return (
-    <AuthProvider>
+
+      <AuthProvider>
       <Toaster position="top-right" reverseOrder={false} />
+      <AppRouter />
+  
+
       <Navbar />
       <AppRouter />
-    </AuthProvider>
+      </AuthProvider>
   );
 }
 

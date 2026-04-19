@@ -1,33 +1,111 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import NotificationBell from "../common/NotificationBell";
+
+import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { FaBars, FaHome, FaTimes } from "react-icons/fa";
 
 function Navbar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const navItems = [
+    { label: "Home", to: "/" },
+    { label: "Resources", to: "/resources" },
+    { label: "Bookings", to: "/booking/new" },
+    { label: "Tickets", to: "/tickets" },
+    { label: "Notifications", to: "/notifications" },
+  ];
 
-  if (!user) return null;
+  const navLinkClass = ({ isActive }) =>
+    `transition hover:text-[#4FD1C5] ${
+      isActive ? "text-white border-b-2 border-[#F5B400] pb-1" : "text-white"
+    }`;
+
+  const mobileNavLinkClass = ({ isActive }) =>
+    `block rounded-xl px-4 py-3 text-sm font-medium transition ${
+      isActive
+        ? "bg-[#3E4C59] text-white"
+        : "text-slate-200 hover:bg-[#3E4C59] hover:text-white"
+    }`;
 
   return (
-    <nav className="w-full px-6 py-3 flex justify-between items-center bg-white border-b border-orange-100 shadow-sm">
-      <span className="font-semibold text-lg" style={{ color: "#7C3B0A" }}>Smart Campus</span>
-      <div className="flex items-center gap-4">
-        <NotificationBell />
-        <span className="text-sm text-stone-600 font-medium">{user.name}</span>
-        <button
-          onClick={handleLogout}
-          className="text-sm px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition font-semibold text-orange-900 active:scale-95"
-        >
-          Logout
-        </button>
-      </div>
-    </nav>
+    <>
+      {/* Top header */}
+      <header className="bg-white shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link to="/" className="flex items-center gap-3 sm:gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4FD1C5] to-[#2F80ED] text-white shadow-md sm:h-14 sm:w-14">
+              <FaHome size={20} />
+            </div>
+
+            <div>
+              <h1 className="text-lg font-extrabold tracking-wide text-[#123A7A] sm:text-2xl">
+                Smart Campus Operations Hub
+              </h1>
+              <p className="hidden text-sm text-slate-500 sm:block">
+                SLIIT-inspired campus services portal
+              </p>
+            </div>
+          </Link>
+
+          <div className="hidden items-center gap-3 md:flex">
+            <Link
+              to="/login"
+              className="rounded-full border border-[#2F80ED] px-5 py-2 text-sm font-semibold text-[#123A7A] transition hover:bg-[#EAF4FF]"
+            >
+              Log In
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="rounded-xl p-2 text-[#123A7A] transition hover:bg-slate-100 md:hidden"
+          >
+            {mobileOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          </button>
+        </div>
+      </header>
+
+      {/* Desktop nav */}
+      <nav className="hidden bg-[#2F3B46] text-white md:block">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-6 py-4 text-sm font-medium">
+          {navItems.map((item) => (
+            <NavLink key={item.to} to={item.to} className={navLinkClass}>
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+
+      {/* Mobile nav */}
+      {mobileOpen && (
+        <div className="border-t border-slate-200 bg-[#2F3B46] px-4 py-4 md:hidden">
+          <div className="mx-auto max-w-7xl space-y-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={mobileNavLinkClass}
+                onClick={() => setMobileOpen(false)}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+
+            <Link
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="mt-3 block rounded-xl bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-4 py-3 text-center text-sm font-semibold text-white shadow-md"
+            >
+              Log In
+            </Link>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
+
+
+
 
 export default Navbar;

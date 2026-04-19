@@ -34,17 +34,13 @@ public class SecurityConfig {
                 )
             )
             .authorizeHttpRequests(auth -> auth
-                // Public
                 .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/login").permitAll()
-                // Admin only
                 .requestMatchers("/api/notifications/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
-                // Staff + Admin
                 .requestMatchers(org.springframework.http.HttpMethod.PUT,  "/api/tickets/**").hasAnyRole("STAFF","ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/tickets/**").hasAnyRole("STAFF","ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.DELETE,"/api/tickets/**").hasAnyRole("STAFF","ADMIN")
-                // All authenticated users
                 .requestMatchers("/api/tickets/**").authenticated()
                 .requestMatchers("/api/comments/**").authenticated()
                 .requestMatchers("/api/notifications/**").authenticated()

@@ -5,6 +5,10 @@ import TicketStatusBadge from "../../components/tickets/TicketStatusBadge";
 import TicketPriorityBadge from "../../components/tickets/TicketPriorityBadge";
 import TicketAttachmentGallery from "../../components/tickets/TicketAttachmentGallery";
 import TicketCommentSection from "../../components/tickets/TicketCommentSection";
+import { getNextTicketStatuses } from "../../utils/ticketTransitions";
+
+const CURRENT_USER_ID = 1;
+const MAX_ATTACHMENTS = 3;
 
 function TicketDetailsPage() {
   const { id } = useParams();
@@ -14,19 +18,30 @@ function TicketDetailsPage() {
   const [attachments, setAttachments] = useState([]);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+  const [assignForm, setAssignForm] = useState({
+    assignedToUserId: "",
+  });
   const [statusForm, setStatusForm] = useState({
     status: "",
     rejectionReason: "",
     resolutionNotes: "",
   });
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentActionId, setCommentActionId] = useState(null);
+  const [assignSubmitting, setAssignSubmitting] = useState(false);
   const [statusSubmitting, setStatusSubmitting] = useState(false);
+  const [uploadSubmitting, setUploadSubmitting] = useState(false);
+  const [attachmentActionId, setAttachmentActionId] = useState(null);
+  const [uploadInputKey, setUploadInputKey] = useState(0);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState({ type: "", text: "" });
 
-  const loadDetails = async () => {
-    setLoading(true);
-    setError("");
+  const loadDetails = async ({ showSpinner = true } = {}) => {
+    if (showSpinner) {
+      setLoading(true);
+    }
 
     try {
       const [ticketRes, attachmentRes, commentRes] = await Promise.all([
@@ -38,15 +53,26 @@ function TicketDetailsPage() {
       setTicket(ticketRes.data);
       setAttachments(Array.isArray(attachmentRes.data) ? attachmentRes.data : []);
       setComments(Array.isArray(commentRes.data) ? commentRes.data : []);
-      setStatusForm((prev) => ({
-        ...prev,
-        status: ticketRes.data?.status || "",
-      }));
+      setAssignForm({
+        assignedToUserId: ticketRes.data?.assignedToUserId
+          ? String(ticketRes.data.assignedToUserId)
+          : "",
+      });
+      setStatusForm({
+        status: "",
+        rejectionReason: "",
+        resolutionNotes: "",
+      });
+      setError("");
     } catch (err) {
       console.error(err);
-      setError("Failed to load ticket details.");
+      setError(
+        err?.response?.data?.message || "Failed to load ticket details."
+      );
     } finally {
-      setLoading(false);
+      if (showSpinner) {
+        setLoading(false);
+      }
     }
   };
 
@@ -54,36 +80,231 @@ function TicketDetailsPage() {
     loadDetails();
   }, [id]);
 
+  const transitionOptions = getNextTicketStatuses(ticket?.status);
+  const remainingAttachmentSlots = Math.max(
+    MAX_ATTACHMENTS - attachments.length,
+    0
+  );
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
     try {
       setCommentSubmitting(true);
-      await ticketService.addComment(id, { commentText: newComment });
+      setMessage({ type: "", text: "" });
+      await ticketService.addComment(id, { commentText: newComment.trim() });
       setNewComment("");
-      await loadDetails();
+      setMessage({ type: "success", text: "Comment added successfully." });
+      await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to add comment.",
+      });
     } finally {
       setCommentSubmitting(false);
     }
   };
 
+  const handleUpdateComment = async (commentId, commentText) => {
+    try {
+      setCommentActionId(commentId);
+      setMessage({ type: "", text: "" });
+      await ticketService.updateComment(commentId, { commentText });
+      setMessage({ type: "success", text: "Comment updated successfully." });
+      await loadDetails({ showSpinner: false });
+      return true;
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to update comment.",
+      });
+      return false;
+    } finally {
+      setCommentActionId(null);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this comment?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setCommentActionId(commentId);
+      setMessage({ type: "", text: "" });
+      await ticketService.deleteComment(commentId);
+      setMessage({ type: "success", text: "Comment deleted successfully." });
+      await loadDetails({ showSpinner: false });
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to delete comment.",
+      });
+    } finally {
+      setCommentActionId(null);
+    }
+  };
+
+  const handleAssignTicket = async () => {
+    if (!assignForm.assignedToUserId) {
+      setMessage({
+        type: "error",
+        text: "Please enter a user ID before assigning the ticket.",
+      });
+      return;
+    }
+
+    try {
+      setAssignSubmitting(true);
+      setMessage({ type: "", text: "" });
+      await ticketService.assignTicket(id, {
+        assignedToUserId: Number(assignForm.assignedToUserId),
+      });
+      setMessage({ type: "success", text: "Ticket assigned successfully." });
+      await loadDetails({ showSpinner: false });
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to assign ticket.",
+      });
+    } finally {
+      setAssignSubmitting(false);
+    }
+  };
+
   const handleStatusUpdate = async () => {
-    if (!statusForm.status) return;
+    if (!statusForm.status) {
+      setMessage({
+        type: "error",
+        text: "Please select the next status first.",
+      });
+      return;
+    }
+
+    if (
+      statusForm.status === "REJECTED" &&
+      !statusForm.rejectionReason.trim()
+    ) {
+      setMessage({
+        type: "error",
+        text: "Rejection reason is required for rejected tickets.",
+      });
+      return;
+    }
+
+    if (
+      statusForm.status === "RESOLVED" &&
+      !statusForm.resolutionNotes.trim()
+    ) {
+      setMessage({
+        type: "error",
+        text: "Resolution notes are required for resolved tickets.",
+      });
+      return;
+    }
 
     try {
       setStatusSubmitting(true);
+      setMessage({ type: "", text: "" });
       await ticketService.updateStatus(id, {
         status: statusForm.status,
-        rejectionReason: statusForm.rejectionReason || null,
-        resolutionNotes: statusForm.resolutionNotes || null,
+        rejectionReason:
+          statusForm.status === "REJECTED"
+            ? statusForm.rejectionReason.trim()
+            : null,
+        resolutionNotes:
+          statusForm.status === "RESOLVED"
+            ? statusForm.resolutionNotes.trim()
+            : null,
       });
-      await loadDetails();
+      setMessage({ type: "success", text: "Ticket status updated." });
+      await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to update status.",
+      });
     } finally {
       setStatusSubmitting(false);
+    }
+  };
+
+  const handleFileSelection = (event) => {
+    const files = Array.from(event.target.files || []);
+
+    if (files.length > remainingAttachmentSlots) {
+      setMessage({
+        type: "error",
+        text: `You can upload up to ${remainingAttachmentSlots} more attachment(s).`,
+      });
+      return;
+    }
+
+    setMessage({ type: "", text: "" });
+    setSelectedFiles(files);
+  };
+
+  const handleAttachmentUpload = async () => {
+    if (!selectedFiles.length) return;
+
+    try {
+      setUploadSubmitting(true);
+      setMessage({ type: "", text: "" });
+
+      for (const file of selectedFiles) {
+        await ticketService.uploadAttachment(id, file);
+      }
+
+      setSelectedFiles([]);
+      setUploadInputKey((prev) => prev + 1);
+      setMessage({
+        type: "success",
+        text: "Attachment(s) uploaded successfully.",
+      });
+      await loadDetails({ showSpinner: false });
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to upload attachments.",
+      });
+    } finally {
+      setUploadSubmitting(false);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this attachment?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setAttachmentActionId(attachmentId);
+      setMessage({ type: "", text: "" });
+      await ticketService.deleteAttachment(attachmentId);
+      setMessage({
+        type: "success",
+        text: "Attachment deleted successfully.",
+      });
+      await loadDetails({ showSpinner: false });
+    } catch (err) {
+      console.error(err);
+      setMessage({
+        type: "error",
+        text: err?.response?.data?.message || "Failed to delete attachment.",
+      });
+    } finally {
+      setAttachmentActionId(null);
     }
   };
 
@@ -128,6 +349,18 @@ function TicketDetailsPage() {
             Back to Tickets
           </button>
         </div>
+
+        {message.text ? (
+          <div
+            className={`mb-6 rounded-2xl px-4 py-3 text-sm font-medium ${
+              message.type === "success"
+                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                : "bg-red-50 text-red-700 ring-1 ring-red-200"
+            }`}
+          >
+            {message.text}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
@@ -181,6 +414,24 @@ function TicketDetailsPage() {
                       : "N/A"}
                   </p>
                 </div>
+
+                <div className="rounded-2xl bg-[#F5F8FC] p-4">
+                  <p className="text-sm text-slate-500">Resolved At</p>
+                  <p className="font-semibold text-[#123A7A]">
+                    {ticket.resolvedAt
+                      ? new Date(ticket.resolvedAt).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[#F5F8FC] p-4">
+                  <p className="text-sm text-slate-500">Closed At</p>
+                  <p className="font-semibold text-[#123A7A]">
+                    {ticket.closedAt
+                      ? new Date(ticket.closedAt).toLocaleString()
+                      : "N/A"}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-5 rounded-2xl bg-[#F5F8FC] p-4">
@@ -211,7 +462,12 @@ function TicketDetailsPage() {
               ) : null}
             </div>
 
-            <TicketAttachmentGallery attachments={attachments} />
+            <TicketAttachmentGallery
+              attachments={attachments}
+              currentUserId={CURRENT_USER_ID}
+              onDeleteAttachment={handleDeleteAttachment}
+              deletingAttachmentId={attachmentActionId}
+            />
 
             <TicketCommentSection
               comments={comments}
@@ -219,19 +475,104 @@ function TicketDetailsPage() {
               setNewComment={setNewComment}
               onAddComment={handleAddComment}
               submitting={commentSubmitting}
+              onUpdateComment={handleUpdateComment}
+              onDeleteComment={handleDeleteComment}
+              actionCommentId={commentActionId}
+              currentUserId={CURRENT_USER_ID}
             />
           </div>
 
-          <div>
+          <div className="space-y-6">
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+              <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
+                Assign Ticket
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-[#123A7A]">
+                    Assigned User ID
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={assignForm.assignedToUserId}
+                    onChange={(e) =>
+                      setAssignForm({ assignedToUserId: e.target.value })
+                    }
+                    placeholder="Enter technician user ID"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAssignTicket}
+                  disabled={assignSubmitting}
+                  className="w-full rounded-full bg-[#123A7A] px-6 py-3 font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {assignSubmitting ? "Assigning..." : "Assign Ticket"}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+              <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
+                Upload Attachments
+              </h2>
+
+              <p className="mb-3 text-sm text-slate-500">
+                {attachments.length} / {MAX_ATTACHMENTS} attachment(s) used
+              </p>
+
+              <div className="space-y-4">
+                <input
+                  key={uploadInputKey}
+                  type="file"
+                  multiple
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={handleFileSelection}
+                  disabled={remainingAttachmentSlots === 0}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                />
+
+                {selectedFiles.length ? (
+                  <p className="text-sm text-slate-500">
+                    {selectedFiles.length} file(s) selected
+                  </p>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handleAttachmentUpload}
+                  disabled={
+                    uploadSubmitting ||
+                    remainingAttachmentSlots === 0 ||
+                    !selectedFiles.length
+                  }
+                  className="w-full rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {uploadSubmitting ? "Uploading..." : "Upload Attachment(s)"}
+                </button>
+              </div>
+            </div>
+
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
               <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
                 Update Ticket Status
               </h2>
 
               <div className="space-y-4">
+                <div className="rounded-2xl bg-[#F5F8FC] p-4 text-sm text-slate-600">
+                  Current status:{" "}
+                  <span className="font-semibold text-[#123A7A]">
+                    {ticket.status}
+                  </span>
+                </div>
+
                 <div>
                   <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                    Status
+                    Next Status
                   </label>
                   <select
                     value={statusForm.status}
@@ -242,12 +583,18 @@ function TicketDetailsPage() {
                       }))
                     }
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                    disabled={!transitionOptions.length}
                   >
-                    <option value="OPEN">OPEN</option>
-                    <option value="IN_PROGRESS">IN_PROGRESS</option>
-                    <option value="RESOLVED">RESOLVED</option>
-                    <option value="CLOSED">CLOSED</option>
-                    <option value="REJECTED">REJECTED</option>
+                    <option value="">
+                      {transitionOptions.length
+                        ? "Select next status"
+                        : "No further transitions available"}
+                    </option>
+                    {transitionOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -265,7 +612,7 @@ function TicketDetailsPage() {
                       }))
                     }
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                    placeholder="Add resolution notes if resolved..."
+                    placeholder="Required when moving to RESOLVED"
                   />
                 </div>
 
@@ -283,14 +630,14 @@ function TicketDetailsPage() {
                       }))
                     }
                     className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                    placeholder="Add rejection reason if rejected..."
+                    placeholder="Required when moving to REJECTED"
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={handleStatusUpdate}
-                  disabled={statusSubmitting}
+                  disabled={statusSubmitting || !transitionOptions.length}
                   className="w-full rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {statusSubmitting ? "Updating..." : "Update Status"}
