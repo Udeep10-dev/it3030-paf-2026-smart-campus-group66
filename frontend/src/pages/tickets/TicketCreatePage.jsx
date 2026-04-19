@@ -34,11 +34,22 @@ function TicketCreatePage() {
       });
       return;
     }
+
+    setMessage({ type: "", text: "" });
     setFiles(selected);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.resourceId && !form.location.trim()) {
+      setMessage({
+        type: "error",
+        text: "Please provide either a Resource ID or a location.",
+      });
+      return;
+    }
+
     setSubmitting(true);
     setMessage({ type: "", text: "" });
 
@@ -156,8 +167,8 @@ function TicketCreatePage() {
                 <option value="">Select category</option>
                 <option value="ELECTRICAL">ELECTRICAL</option>
                 <option value="NETWORK">NETWORK</option>
-                <option value="HARDWARE">HARDWARE</option>
-                <option value="SOFTWARE">SOFTWARE</option>
+                <option value="PROJECTOR">PROJECTOR</option>
+                <option value="FURNITURE">FURNITURE</option>
                 <option value="CLEANING">CLEANING</option>
                 <option value="OTHER">OTHER</option>
               </select>
@@ -178,7 +189,7 @@ function TicketCreatePage() {
                 <option value="LOW">LOW</option>
                 <option value="MEDIUM">MEDIUM</option>
                 <option value="HIGH">HIGH</option>
-                <option value="CRITICAL">CRITICAL</option>
+                <option value="URGENT">URGENT</option>
               </select>
             </div>
 
@@ -194,6 +205,9 @@ function TicketCreatePage() {
                 placeholder="Phone number or email"
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
               />
+              <p className="mt-2 text-xs text-slate-500">
+                Use phone or email so the maintenance team can reach you.
+              </p>
             </div>
 
             <div className="md:col-span-2">
