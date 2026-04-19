@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/resources")
+@RequestMapping({"/resources", "/api/resources"})
 @RequiredArgsConstructor
 @CrossOrigin
 public class ResourceController {
