@@ -2,10 +2,12 @@ package com.sliit.group66.smartcampus.entity;
 
 import com.sliit.group66.smartcampus.enums.NotificationType;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "notifications")
 public class Notification {
@@ -26,7 +28,7 @@ public class Notification {
     private String message;
 
     @Column(nullable = false)
-    private boolean isRead = false;
+    private boolean read = false;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
