@@ -7,6 +7,7 @@ const toCreatePayload = (data) => ({
   bookingDate: data.bookingDate,
   startTime: data.startTime,
   endTime: data.endTime,
+  expectedAttendees: Number(data.expectedAttendees),
   purpose: (data.purpose || "").trim(),
 });
 

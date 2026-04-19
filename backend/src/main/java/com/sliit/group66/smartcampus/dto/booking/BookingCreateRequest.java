@@ -8,5 +8,6 @@ public class BookingCreateRequest {
     public LocalDate bookingDate;
     public LocalTime startTime;
     public LocalTime endTime;
+    public Integer expectedAttendees;
     public String purpose;
 }

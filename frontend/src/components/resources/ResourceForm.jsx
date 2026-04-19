@@ -29,11 +29,42 @@ const ResourceForm = ({
     type: "",
     capacity: "",
     location: "",
+    category: "",
     status: "AVAILABLE",
     availabilityStart: "",
     availabilityEnd: "",
     ...initialData,
   });
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!form.name.trim()) {
+      newErrors.name = "Resource name is required";
+    }
+
+    if (!form.type.trim()) {
+      newErrors.type = "Type is required";
+    }
+
+    if (!form.capacity) {
+      newErrors.capacity = "Capacity is required";
+    } else if (form.capacity <= 0) {
+      newErrors.capacity = "Capacity must be greater than 0";
+    }
+
+    if (!form.location.trim()) {
+      newErrors.location = "Location is required";
+    }
+
+    if (!form.category) {
+      newErrors.category = "Please select a category";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -79,8 +110,11 @@ const ResourceForm = ({
               placeholder="e.g. Main Conference Room"
               value={form.name}
               onChange={handleChange}
-              className={inputCls}
+              className={inputCls + (errors.name ? " border-red-400" : "")}
             />
+            {errors.name && (
+              <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -93,8 +127,11 @@ const ResourceForm = ({
                 placeholder="e.g. Meeting Room"
                 value={form.type}
                 onChange={handleChange}
-                className={inputCls}
+                className={inputCls + (errors.type ? " border-red-400" : "")}
               />
+              {errors.type && (
+                <p className="text-xs text-red-500 mt-1">{errors.type}</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold mb-1.5 text-orange-700">
@@ -106,22 +143,60 @@ const ResourceForm = ({
                 placeholder="e.g. 20"
                 value={form.capacity}
                 onChange={handleChange}
-                className={inputCls}
+                className={
+                  inputCls + (errors.capacity ? " border-red-400" : "")
+                }
               />
+              {errors.capacity && (
+                <p className="text-xs text-red-500 mt-1">{errors.capacity}</p>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold mb-1.5 text-orange-700">
-              Location
-            </label>
-            <input
-              name="location"
-              placeholder="e.g. Floor 3, Block B"
-              value={form.location}
-              onChange={handleChange}
-              className={inputCls}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
+                Location
+              </label>
+              <input
+                name="location"
+                placeholder="e.g. Floor 3, Block B"
+                value={form.location}
+                onChange={handleChange}
+                className={
+                  inputCls + (errors.location ? " border-red-400" : "")
+                }
+              />
+              {errors.location && (
+                <p className="text-xs text-red-500 mt-1">{errors.location}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
+                Category
+              </label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className={
+                  inputCls +
+                  (errors.category ? " border-red-400" : "") +
+                  " cursor-pointer appearance-none"
+                }
+              >
+                <option value="">Select category</option>
+                <option value="Lecture halls"> Lecture halls</option>
+                <option value="Labs">Labs</option>
+                <option value="Meeting rooms">Meeting rooms</option>
+                <option value="Equipment">Equipment</option>
+                <option value="Other">Other</option>
+              </select>
+
+              {errors.category && (
+                <p className="text-xs text-red-500 mt-1">{errors.category}</p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -144,7 +219,9 @@ const ResourceForm = ({
               {badge.label}
             </span>
           </div>
-          {/* <div className="grid grid-cols-2 gap-3">
+
+          {/*
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 Start Time
@@ -157,7 +234,6 @@ const ResourceForm = ({
                 className={inputCls}
               />
             </div>
-
             <div>
               <label className="block text-xs font-semibold mb-1.5 text-orange-700">
                 End Time
@@ -170,22 +246,27 @@ const ResourceForm = ({
                 className={inputCls}
               />
             </div>
-          </div> */}
+          </div>
+          */}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-2 mt-6 pt-5 border-t border-orange-50">
+        <div className="flex justify-between gap-2 mt-6 pt-5 border-t border-orange-50">
           <button
             type="button"
             onClick={onCancel}
-            className="h-10 px-5 rounded-xl text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all cursor-pointer"
+            className="h-10 w-full px-5 rounded-xl text-sm font-semibold text-orange-600 bg-orange-50 hover:bg-orange-100 active:scale-95 transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={() => onSubmit?.(form)}
-            className="flex-1 h-10 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all cursor-pointer shadow-sm shadow-orange-200"
+            onClick={() => {
+              if (validate()) {
+                onSubmit?.(form);
+              }
+            }}
+            className="w-full h-10 rounded-xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all cursor-pointer shadow-sm shadow-orange-200"
           >
             {isEditing ? "Update resource" : "Save resource"}
           </button>

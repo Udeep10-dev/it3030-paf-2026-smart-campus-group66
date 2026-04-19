@@ -22,15 +22,21 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
+        try {
+            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+            String email = oAuth2User.getAttribute("email");
 
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                response.sendRedirect("http://localhost:5173/login?error=user_not_found");
+                return;
+            }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        String token = jwtUtil.generateToken(email, user.getRole().name());
-
-        response.sendRedirect("http://localhost:5173/dashboard?token=" + token);
+            String token = jwtUtil.generateToken(email, user.getRole().name());
+            response.sendRedirect("http://localhost:5173/dashboard?token=" + token);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("http://localhost:5173/login?error=server_error");
+        }
     }
 }

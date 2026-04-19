@@ -40,4 +40,9 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setRead(true);
         return notificationRepository.save(notification);
     }
+
+    @Override
+    public List<Notification> getAllNotifications() {
+        return notificationRepository.findAll();
+    }
 }

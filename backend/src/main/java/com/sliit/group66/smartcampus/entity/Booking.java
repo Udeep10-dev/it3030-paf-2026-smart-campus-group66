@@ -34,6 +34,8 @@ public class Booking {
 
     private LocalTime endTime;
 
+    private Integer expectedAttendees;
+
     private String purpose;
 
     @Enumerated(EnumType.STRING)
