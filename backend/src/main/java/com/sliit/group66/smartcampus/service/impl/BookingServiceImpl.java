@@ -27,6 +27,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setBookingDate(req.bookingDate);
         booking.setStartTime(req.startTime);
         booking.setEndTime(req.endTime);
+        booking.setExpectedAttendees(req.expectedAttendees);
         booking.setPurpose(req.purpose);
         booking.setStatus(BookingStatus.PENDING);
 
@@ -62,6 +63,7 @@ public class BookingServiceImpl implements BookingService {
         r.bookingDate = b.getBookingDate();
         r.startTime = b.getStartTime();
         r.endTime = b.getEndTime();
+        r.expectedAttendees = b.getExpectedAttendees();
         r.purpose = b.getPurpose();
         r.status = b.getStatus();
         return r;
