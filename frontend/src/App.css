@@ -1,10 +1,12 @@
-body {
+html,
+body,
+#root {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  color: #222;
+  padding: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-h1 {
-  padding: 20px;
+body {
+  background: #f5f8fc;
 }
