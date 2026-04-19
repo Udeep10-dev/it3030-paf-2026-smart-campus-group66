@@ -11,43 +11,66 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#FFF8F3" }}>
-      <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-10 flex flex-col items-center gap-6 w-full max-w-sm">
-        <div className="flex flex-col items-center gap-1">
-          <h1 className="text-3xl font-semibold" style={{ color: "#7C3B0A" }}>Smart Campus</h1>
-          <p className="text-orange-300 text-sm">Operations Hub</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #e0e7ff 100%)", fontFamily: "'Inter', sans-serif" }}>
+
+      {/* Card */}
+      <div style={{ background: "#fff", borderRadius: 20, boxShadow: "0 8px 40px rgba(59,130,246,0.12)", padding: "44px 40px", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, width: "100%", maxWidth: 380 }}>
+
+        {/* Logo area */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg, #3b82f6, #6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>
+            🏛️
+          </div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#1e3a5f", letterSpacing: "-0.3px" }}>Smart Campus</h1>
+          <p style={{ margin: 0, fontSize: 13, color: "#93c5fd", fontWeight: 500 }}>Operations Hub</p>
         </div>
 
-        <div className="w-full border-t border-orange-100" />
+        <div style={{ width: "100%", height: 1, background: "#eff6ff" }} />
 
-        <div className="flex flex-col gap-1 w-full text-center">
-          <p className="text-stone-600 text-sm">Sign in to access your account</p>
-          <p className="text-orange-300 text-xs">Students · Staff · Admins</p>
+        {/* Subtitle */}
+        <div style={{ textAlign: "center" }}>
+          <p style={{ margin: "0 0 4px", fontSize: 14, color: "#475569", fontWeight: 500 }}>Sign in to access your account</p>
+          <p style={{ margin: 0, fontSize: 12, color: "#93c5fd" }}>Students · Staff · Admins</p>
         </div>
 
+        {/* Error */}
         {error && (
-          <div className="w-full bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-xs text-red-600 text-center">
+          <div style={{ width: "100%", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "#dc2626", textAlign: "center" }}>
             {error}
           </div>
         )}
 
+        {/* Google button */}
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="flex items-center gap-3 px-6 py-3 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition text-sm font-semibold text-orange-900 w-full justify-center disabled:opacity-50 active:scale-95"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            width: "100%", padding: "12px 20px", borderRadius: 10,
+            border: "1.5px solid #bfdbfe",
+            background: loading ? "#eff6ff" : "#fff",
+            color: "#1d4ed8", fontSize: 14, fontWeight: 600,
+            cursor: loading ? "not-allowed" : "pointer",
+            transition: "all .2s", boxShadow: "0 1px 4px rgba(59,130,246,0.08)",
+            opacity: loading ? 0.7 : 1
+          }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#eff6ff"; }}
+          onMouseLeave={e => { if (!loading) e.currentTarget.style.background = "#fff"; }}
         >
           {loading ? (
-            <span className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+            <span style={{ width: 18, height: 18, border: "2px solid #93c5fd", borderTop: "2px solid #3b82f6", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} />
           ) : (
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: 18, height: 18 }} />
           )}
           {loading ? "Signing in..." : "Continue with Google"}
         </button>
 
-        <p className="text-xs text-orange-300 text-center">
+        <p style={{ margin: 0, fontSize: 11, color: "#bfdbfe", textAlign: "center" }}>
           Only authorized campus members can access this system.
         </p>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
