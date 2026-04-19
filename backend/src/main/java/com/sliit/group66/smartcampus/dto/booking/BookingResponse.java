@@ -10,6 +10,7 @@ public class BookingResponse {
     public LocalDate bookingDate;
     public LocalTime startTime;
     public LocalTime endTime;
+    public Integer expectedAttendees;
     public String purpose;
     public BookingStatus status;
 }
