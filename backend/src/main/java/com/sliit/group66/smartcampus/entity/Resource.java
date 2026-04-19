@@ -25,7 +25,10 @@ public class Resource {
     private Integer capacity;
     private String location;
 
+    @Column(nullable = true)
     private LocalTime availabilityStart;
+
+    @Column(nullable = true)
     private LocalTime availabilityEnd;
 
     @Enumerated(EnumType.STRING)

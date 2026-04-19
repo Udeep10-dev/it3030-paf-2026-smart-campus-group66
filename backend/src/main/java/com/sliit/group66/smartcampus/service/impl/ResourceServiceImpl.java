@@ -34,6 +34,17 @@ public class ResourceServiceImpl implements ResourceService {
                 .collect(Collectors.toList());
     }
 
+        @Override
+        public List<ResourceDTO> filterResources(String type, String location, Integer capacity) {
+
+        return repository.findAll().stream()
+                .filter(r -> type == null || type.isEmpty() || r.getType().toLowerCase().contains(type.toLowerCase()))
+                .filter(r -> location == null || location.isEmpty() || r.getLocation().toLowerCase().contains(location.toLowerCase()))
+                .filter(r -> capacity == null || r.getCapacity() >= capacity)
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+        }
+
     @Override
     public ResourceDTO getById(Long id) {
         Resource resource = repository.findById(id)
@@ -77,17 +88,8 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setCapacity(dto.getCapacity());
         resource.setLocation(dto.getLocation());
 
-        resource.setAvailabilityStart(
-                dto.getAvailabilityStart() != null
-                        ? dto.getAvailabilityStart()
-                        : LocalTime.of(8, 0)
-        );
-
-        resource.setAvailabilityEnd(
-                dto.getAvailabilityEnd() != null
-                        ? dto.getAvailabilityEnd()
-                        : LocalTime.of(17, 0)
-        );
+        resource.setAvailabilityStart(dto.getAvailabilityStart());
+        resource.setAvailabilityEnd(dto.getAvailabilityEnd());
 
         resource.setStatus(
                 dto.getStatus() != null
@@ -96,6 +98,7 @@ public class ResourceServiceImpl implements ResourceService {
         );
 
         resource.setDescription(dto.getDescription());
+        resource.setCreatedAt(LocalDateTime.now());
 
         resource.setResourceCode(
                 "RES-" + UUID.randomUUID().toString().substring(0, 8)
