@@ -4,8 +4,10 @@ import com.sliit.group66.smartcampus.dto.booking.BookingCreateRequest;
 import com.sliit.group66.smartcampus.dto.booking.BookingResponse;
 import com.sliit.group66.smartcampus.entity.Booking;
 import com.sliit.group66.smartcampus.enums.BookingStatus;
+import com.sliit.group66.smartcampus.enums.NotificationType;
 import com.sliit.group66.smartcampus.repository.BookingRepository;
 import com.sliit.group66.smartcampus.service.BookingService;
+import com.sliit.group66.smartcampus.service.NotificationService;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -14,9 +16,11 @@ import org.springframework.stereotype.Service;
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
+    private final NotificationService notificationService;
 
-    public BookingServiceImpl(BookingRepository bookingRepository) {
+    public BookingServiceImpl(BookingRepository bookingRepository, NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -38,14 +42,30 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse approve(Long id) {
         Booking booking = bookingRepository.findById(id).orElseThrow();
         booking.setStatus(BookingStatus.APPROVED);
-        return mapToResponse(bookingRepository.save(booking));
+        BookingResponse response = mapToResponse(bookingRepository.save(booking));
+        try {
+            notificationService.createNotification(
+                booking.getUserId(),
+                "Your booking for resource #" + booking.getResourceId() + " has been approved.",
+                NotificationType.BOOKING_APPROVED
+            );
+        } catch (Exception ignored) {}
+        return response;
     }
 
     @Override
     public BookingResponse reject(Long id, String reason) {
         Booking booking = bookingRepository.findById(id).orElseThrow();
         booking.setStatus(BookingStatus.REJECTED);
-        return mapToResponse(bookingRepository.save(booking));
+        BookingResponse response = mapToResponse(bookingRepository.save(booking));
+        try {
+            notificationService.createNotification(
+                booking.getUserId(),
+                "Your booking for resource #" + booking.getResourceId() + " has been rejected." + (reason != null ? " Reason: " + reason : ""),
+                NotificationType.BOOKING_REJECTED
+            );
+        } catch (Exception ignored) {}
+        return response;
     }
 
     @Override

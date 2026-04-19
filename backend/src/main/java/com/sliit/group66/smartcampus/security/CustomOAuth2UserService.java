@@ -23,33 +23,37 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = oAuth2User.getAttribute("name");
         String avatar = oAuth2User.getAttribute("picture");
 
-        userRepository.findByEmail(email).orElseGet(() -> {
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setName(name);
             newUser.setAvatarUrl(avatar);
-            newUser.setRole(determineRole(email));
-            return userRepository.save(newUser);
+            return newUser;
         });
+        // always sync role so changes to determineRole take effect on next login
+        user.setRole(determineRole(email));
+        userRepository.save(user);
 
         return oAuth2User;
     }
 
     private UserRole determineRole(String email) {
         if (email == null) return UserRole.STUDENT;
-        // Specific admin emails
-        if (email.equals("admin@sliit.lk") || email.endsWith("@admin.sliit.lk")) {
-            return UserRole.ADMIN;
-        }
-        // Staff domain
-        if (email.endsWith("@sliit.lk")) {
-            return UserRole.STAFF;
-        }
-        // Students domain
-        if (email.endsWith("@students.sliit.lk")) {
-            return UserRole.STUDENT;
-        }
-        // Default fallback
+
+        // Hardcoded admin accounts (real Google accounts with admin access)
+        java.util.Set<String> adminEmails = java.util.Set.of(
+            "it23829060@my.sliit.lk",
+            "it23823998@my.sliit.lk"
+        );
+
+        if (adminEmails.contains(email)) return UserRole.ADMIN;
+
+        // Domain-based rules
+        if (email.endsWith("@it.sliit.lk"))  return UserRole.STAFF;
+        if (email.endsWith("@my.sliit.lk"))  return UserRole.STAFF;  // other SLIIT = staff
+        if (email.endsWith("@sliit.lk"))     return UserRole.STAFF;
+        if (email.endsWith("@gmail.com"))    return UserRole.STUDENT;
+
         return UserRole.STUDENT;
     }
 }

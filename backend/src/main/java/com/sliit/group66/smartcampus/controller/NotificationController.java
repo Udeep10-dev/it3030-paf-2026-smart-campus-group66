@@ -3,11 +3,10 @@ package com.sliit.group66.smartcampus.controller;
 import com.sliit.group66.smartcampus.entity.Notification;
 import com.sliit.group66.smartcampus.entity.User;
 import com.sliit.group66.smartcampus.repository.UserRepository;
-import com.sliit.group66.smartcampus.security.CurrentUser;
 import com.sliit.group66.smartcampus.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -20,8 +19,8 @@ public class NotificationController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<List<Notification>> getMyNotifications(@CurrentUser OAuth2User principal) {
-        String email = principal.getAttribute("email");
+    public ResponseEntity<List<Notification>> getMyNotifications(Authentication authentication) {
+        String email = (String) authentication.getPrincipal();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(notificationService.getUserNotifications(user.getId()));
@@ -52,8 +51,8 @@ public class NotificationController {
     record NotificationRequest(Long userId, String message) {}
 
     @PostMapping("/test")
-    public ResponseEntity<Notification> createTest(@CurrentUser OAuth2User principal) {
-        String email = principal.getAttribute("email");
+    public ResponseEntity<Notification> createTest(Authentication authentication) {
+        String email = (String) authentication.getPrincipal();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Notification n = notificationService.createNotification(
