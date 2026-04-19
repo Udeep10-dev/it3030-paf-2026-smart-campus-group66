@@ -43,7 +43,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // Hardcoded admin accounts (real Google accounts with admin access)
         java.util.Set<String> adminEmails = java.util.Set.of(
             "it23829060@my.sliit.lk",
-            "it23823998@my.sliit.lk"
+            "it23823998@my.sliit.lk",
+            "udeepgayantha2001@gmail.com"
         );
 
         if (adminEmails.contains(email)) return UserRole.ADMIN;
