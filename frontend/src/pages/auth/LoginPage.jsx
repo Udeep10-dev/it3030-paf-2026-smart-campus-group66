@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const { error } = useAuth();
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -23,6 +25,12 @@ function LoginPage() {
           <p className="text-orange-300 text-xs">Students · Staff · Admins</p>
         </div>
 
+        {error && (
+          <div className="w-full bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-xs text-red-600 text-center">
+            {error}
+          </div>
+        )}
+
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
@@ -33,7 +41,7 @@ function LoginPage() {
           ) : (
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
           )}
-          {loading ? "Redirecting..." : "Continue with Google"}
+          {loading ? "Signing in..." : "Continue with Google"}
         </button>
 
         <p className="text-xs text-orange-300 text-center">
