@@ -4,7 +4,6 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import LoginPage from "../pages/auth/LoginPage";
 
 import ResourceListPage from "../pages/resources/ResourceListPage";
-import ResourceFormPage from "../pages/resources/ResourceFormPage";
 import ResourceAdminPage from "../pages/admin/resources/ResourceAdminPage";
 
 import BookingFormPage from "../pages/booking/BookingFormPage";
