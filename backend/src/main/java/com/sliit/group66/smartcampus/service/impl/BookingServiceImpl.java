@@ -4,6 +4,7 @@ import com.sliit.group66.smartcampus.dto.booking.BookingCreateRequest;
 import com.sliit.group66.smartcampus.dto.booking.BookingResponse;
 import com.sliit.group66.smartcampus.entity.Booking;
 import com.sliit.group66.smartcampus.enums.BookingStatus;
+import com.sliit.group66.smartcampus.exception.ForbiddenOperationException;
 import com.sliit.group66.smartcampus.repository.BookingRepository;
 import com.sliit.group66.smartcampus.service.BookingService;
 import java.util.List;
@@ -44,7 +45,25 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse reject(Long id, String reason) {
         Booking booking = bookingRepository.findById(id).orElseThrow();
-        booking.setStatus(BookingStatus.REJECTED);
+
+        if (booking.getStatus() == BookingStatus.APPROVED) {
+            booking.setStatus(BookingStatus.CANCELLED);
+        } else {
+            booking.setStatus(BookingStatus.REJECTED);
+        }
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    public BookingResponse cancel(Long id) {
+        Booking booking = bookingRepository.findById(id).orElseThrow();
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new ForbiddenOperationException("Only approved bookings can be cancelled.");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
         return mapToResponse(bookingRepository.save(booking));
     }
 

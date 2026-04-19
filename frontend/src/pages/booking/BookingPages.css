@@ -156,7 +156,8 @@
 .booking-primary-btn,
 .booking-secondary-btn,
 .booking-success-btn,
-.booking-danger-btn {
+.booking-danger-btn,
+.booking-warning-btn {
   border: none;
   border-radius: 0.7rem;
   padding: 0.65rem 0.95rem;
@@ -176,14 +177,21 @@
 .booking-primary-btn:hover,
 .booking-secondary-btn:hover,
 .booking-success-btn:hover,
-.booking-danger-btn:hover {
+.booking-danger-btn:hover,
+.booking-warning-btn:hover {
   transform: translateY(-1px);
+}
+
+.booking-warning-btn {
+  background: #f59e0b;
+  color: #fff7ed;
 }
 
 .booking-primary-btn:disabled,
 .booking-secondary-btn:disabled,
 .booking-success-btn:disabled,
-.booking-danger-btn:disabled {
+.booking-danger-btn:disabled,
+.booking-warning-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   transform: none;
