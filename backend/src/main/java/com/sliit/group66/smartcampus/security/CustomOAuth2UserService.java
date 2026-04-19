@@ -28,10 +28,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             newUser.setEmail(email);
             newUser.setName(name);
             newUser.setAvatarUrl(avatar);
-            newUser.setRole(UserRole.STUDENT);
+            newUser.setRole(determineRole(email));
             return userRepository.save(newUser);
         });
 
         return oAuth2User;
+    }
+
+    private UserRole determineRole(String email) {
+        if (email == null) return UserRole.STUDENT;
+        // Specific admin emails
+        if (email.equals("admin@sliit.lk") || email.endsWith("@admin.sliit.lk")) {
+            return UserRole.ADMIN;
+        }
+        // Staff domain
+        if (email.endsWith("@sliit.lk")) {
+            return UserRole.STAFF;
+        }
+        // Students domain
+        if (email.endsWith("@students.sliit.lk")) {
+            return UserRole.STUDENT;
+        }
+        // Default fallback
+        return UserRole.STUDENT;
     }
 }
