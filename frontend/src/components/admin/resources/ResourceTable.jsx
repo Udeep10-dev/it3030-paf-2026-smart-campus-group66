@@ -30,7 +30,7 @@ const ResourceTable = ({ resources, onEdit, onDelete }) => (
       >
         <thead>
           <tr className="bg-orange-50/40 border-b border-orange-100">
-            {["Name", "Type", "Cap.", "Location", "Status", "Actions"].map(
+            {["Name", "Type", "Category", "Cap.", "Location", "Status", "Actions"].map(
               (h) => (
                 <th
                   key={h}
@@ -46,7 +46,7 @@ const ResourceTable = ({ resources, onEdit, onDelete }) => (
           {resources.length === 0 ? (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 className="text-center py-12 text-sm text-orange-300 font-medium"
               >
                 No resources found.
@@ -64,13 +64,22 @@ const ResourceTable = ({ resources, onEdit, onDelete }) => (
                     {r.name}
                   </td>
                   <td className="px-5 py-3.5 text-xs text-orange-500 font-medium">
-                    {r.type}
+                    {r.type || "—"}
+                  </td>
+                  <td className="px-5 py-3.5 text-xs">
+                    {r.category ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-orange-50 text-orange-600 ring-1 ring-orange-200">
+                        {r.category}
+                      </span>
+                    ) : (
+                      <span className="text-orange-300 font-medium">—</span>
+                    )}
                   </td>
                   <td className="px-5 py-3.5 text-xs text-orange-500 font-medium">
-                    {r.capacity}
+                    {r.capacity ?? "—"}
                   </td>
                   <td className="px-5 py-3.5 text-xs text-orange-500 font-medium">
-                    {r.location}
+                    {r.location || "—"}
                   </td>
                   <td className="px-5 py-3.5">
                     <span

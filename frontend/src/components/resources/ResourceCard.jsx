@@ -1,178 +1,80 @@
+import React from 'react';
+
 const statusStyles = {
   ACTIVE: {
-    badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
-    dot: "bg-emerald-400",
-    label: "Active",
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    dot: "bg-emerald-500",
+    label: "Available",
   },
   OUT_OF_SERVICE: {
-    badge: "bg-red-50 text-red-700 ring-1 ring-red-200",
-    dot: "bg-red-400",
-    label: "Out of Service",
+    badge: "bg-stone-50 text-stone-500 border-stone-100",
+    dot: "bg-stone-300",
+    label: "Full / Maintenance",
   },
 };
 
 const icons = {
-  Type: (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <rect
-        x="2"
-        y="2"
-        width="5"
-        height="5"
-        rx="1"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <rect
-        x="9"
-        y="2"
-        width="5"
-        height="5"
-        rx="1"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <rect
-        x="2"
-        y="9"
-        width="5"
-        height="5"
-        rx="1"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <rect
-        x="9"
-        y="9"
-        width="5"
-        height="5"
-        rx="1"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-    </svg>
-  ),
   Capacity: (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-      <path
-        d="M2 13c0-2.2 1.8-4 4-4s4 1.8 4 4"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-      <circle
-        cx="11.5"
-        cy="5"
-        r="1.8"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-      <path
-        d="M13.5 13c0-1.7-1-3-2.5-3.5"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   ),
   Location: (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <path
-        d="M8 1.5A4.5 4.5 0 0 1 12.5 6c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 0 1 8 1.5z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-      <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
     </svg>
   ),
 };
 
 const ResourceCard = ({ resource, onBook }) => {
-  const normalizedStatus =
-    resource.status === "AVAILABLE" ? "ACTIVE" : "OUT_OF_SERVICE";
-  const badge = statusStyles[normalizedStatus];
-  const isAvailable = normalizedStatus === "ACTIVE";
+  const isAvailable = resource.status === "AVAILABLE";
+  const style = isAvailable ? statusStyles.ACTIVE : statusStyles.OUT_OF_SERVICE;
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-100 hover:border-stone-200 hover:shadow-lg shadow-sm transition-all duration-200 cursor-pointer group overflow-hidden">
-      {/* Top accent bar */}
-      <div className={`h-1 w-full bg-amber-400`} />
-
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:bg-stone-100 transition-colors flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <rect
-                  x="2"
-                  y="4"
-                  width="12"
-                  height="9"
-                  rx="1.5"
-                  stroke="#78716c"
-                  strokeWidth="1.2"
-                />
-                <path
-                  d="M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"
-                  stroke="#78716c"
-                  strokeWidth="1.2"
-                />
-                <path
-                  d="M5.5 9.5h5M8 7.5v4"
-                  stroke="#78716c"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-stone-800 leading-tight">
-                {resource.name}
-              </h2>
-              <p className="text-xs text-stone-400 mt-0.5">{resource.type}</p>
-            </div>
+    <div 
+      onClick={() => isAvailable && onBook?.(resource)}
+      className={`group relative bg-white rounded-3xl p-2 border border-stone-100 transition-all duration-300 
+        ${isAvailable 
+          ? "hover:border-amber-200 cursor-pointer" 
+          : "opacity-75 cursor-not-allowed"
+        }`}
+    >
+      {/* Inner Container */}
+      <div className="bg-stone-50/50 rounded-[22px] p-5 transition-colors group-hover:bg-white">
+        
+        {/* Top Section: Icon & Status */}
+        <div className="flex justify-between items-start mb-6">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-sm
+            ${isAvailable ? "bg-amber-100 text-amber-600" : "bg-stone-200 text-stone-400"}`}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+               <rect x="3" y="3" width="18" height="18" rx="2" />
+               <path d="M3 9h18M9 21V9" />
+            </svg>
           </div>
-          <span
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${badge.badge}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
-            {badge.label}
+          
+          <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${style.badge}`}>
+            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${style.dot}`} />
+            {style.label}
           </span>
         </div>
 
-        <div className="flex justify-between">
-          <div className="bg-stone-50 rounded-xl p-3 space-y-2 w-full">
-            {[
-              ["Capacity", `${resource.capacity} people`],
-              ["Location", resource.location],
-            ].map(([label, value]) => (
-              <div key={label} className="flex items-center gap-2.5 text-xs">
-                <span className="text-stone-400 flex-shrink-0">
-                  {icons[label]}
-                </span>
-                <span className="text-stone-400 font-medium min-w-[56px]">
-                  {label}
-                </span>
-                <span className="text-stone-600 font-semibold">{value}</span>
-              </div>
-            ))}
-          </div>
+        {/* Title Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-stone-800 group-hover:text-amber-600 transition-colors">
+            {resource.name}
+          </h2>
+          <p className="text-sm text-stone-400 font-medium">{resource.type}</p>
+        </div>
 
-          <div className="flex items-center w-full">
-            <button
-              onClick={() => onBook?.(resource)}
-              disabled={!isAvailable}
-              className={`w-full h-9 rounded-xl text-xs font-bold transition-all duration-150
-            ${
-              isAvailable
-                ? "bg-amber-500 text-white hover:bg-amber-600 active:scale-95 shadow-sm"
-                : "bg-stone-100 text-stone-400 cursor-not-allowed"
-            }`}
-            >
-              {isAvailable ? "Book now" : "Unavailable"}
-            </button>
+        {/* Info Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-1 p-3 rounded-2xl bg-white border border-stone-100 group-hover:border-amber-50 transition-colors">
+            <span className="text-stone-400">{icons.Capacity}</span>
+            <span className="text-xs font-bold text-stone-700">{resource.capacity} Seats</span>
+          </div>
+          <div className="flex flex-col gap-1 p-3 rounded-2xl bg-white border border-stone-100 group-hover:border-amber-50 transition-colors">
+            <span className="text-stone-400">{icons.Location}</span>
+            <span className="text-xs font-bold text-stone-700 truncate">{resource.location}</span>
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import ResourceFilter from "../../../components/resources/ResourceFilter";
 import ResourceTable from "../../../components/admin/resources/ResourceTable";
 import ResourceForm from "../../../components/resources/ResourceForm";
 import DeleteResourceModal from "../../../components/admin/resources/DeleteResourceModal";
+import { toast } from "react-hot-toast";
 
 
 const ResourceAdminPage = () => {
@@ -49,10 +50,13 @@ const ResourceAdminPage = () => {
   };
 
   const handleSave = async (form) => {
+    
     if (editingResource) {
       await resourceService.update(editingResource.id, form);
+      toast.success('Successfully updated!');
     } else {
       await resourceService.create(form);
+      toast.success('Successfully created!');
     }
     closeModal();
     fetchResources();
