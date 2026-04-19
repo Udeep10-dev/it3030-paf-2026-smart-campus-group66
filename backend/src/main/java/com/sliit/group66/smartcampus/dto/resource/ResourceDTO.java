@@ -16,11 +16,9 @@ public class ResourceDTO {
     private String type;
     private Integer capacity;
     private String location;
-    
-    // DTO එකක් නිසා මෙතනට @Column අවශ්‍ය නැත
+    private String category;
     private LocalTime availabilityStart;
     private LocalTime availabilityEnd;
-    
     private String status;
     private String description;
 }

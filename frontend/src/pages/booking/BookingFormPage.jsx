@@ -53,6 +53,9 @@ const toTimeInputValue = (date = new Date()) => {
   return `${hh}:${mm}`;
 };
 
+const MIN_BOOKING_TIME = "08:00";
+const MAX_BOOKING_TIME = "17:00";
+
 function BookingFormPage() {
   const [form, setForm] = useState({
     resourceId: "",
@@ -65,6 +68,7 @@ function BookingFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [attendeesError, setAttendeesError] = useState("");
+  const [startTimeError, setStartTimeError] = useState("");
   const [endTimeError, setEndTimeError] = useState("");
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);
@@ -111,11 +115,45 @@ function BookingFormPage() {
       }
     }
 
-    if (name === "endTime") {
-      if (!value || value <= "17:00") {
-        setEndTimeError("");
+    if (name === "startTime") {
+      if (!value || value >= MIN_BOOKING_TIME) {
+        setStartTimeError("");
+      }
+
+      if (form.endTime) {
+        setEndTimeError(validateEndTime(form.endTime, value));
       }
     }
+
+    if (name === "endTime") {
+      if (!value || value <= MAX_BOOKING_TIME) {
+        setEndTimeError("");
+      }
+
+      if (form.startTime) {
+        setStartTimeError(validateStartTime(form.startTime, value));
+      }
+    }
+  };
+
+  const validateStartTime = (value, endTime = form.endTime) => {
+    if (!value) {
+      return "Start time is required.";
+    }
+
+    if (value < MIN_BOOKING_TIME) {
+      return "Start time cannot be earlier than 8:00 AM.";
+    }
+
+    if (value > MAX_BOOKING_TIME) {
+      return "Start time cannot be later than 5:00 PM.";
+    }
+
+    if (endTime && value >= endTime) {
+      return "Start time must be earlier than end time.";
+    }
+
+    return "";
   };
 
   const validateExpectedAttendees = (value) => {
@@ -135,16 +173,24 @@ function BookingFormPage() {
     setAttendeesError(validateExpectedAttendees(form.expectedAttendees));
   };
 
-  const validateEndTime = (value) => {
+  const validateEndTime = (value, startTime = form.startTime) => {
     if (!value) {
       return "End time is required.";
     }
 
-    if (value > "17:00") {
+    if (value > MAX_BOOKING_TIME) {
       return "End time cannot be later than 5:00 PM.";
     }
 
+    if (startTime && value <= startTime) {
+      return "End time must be later than start time.";
+    }
+
     return "";
+  };
+
+  const handleStartTimeBlur = () => {
+    setStartTimeError(validateStartTime(form.startTime));
   };
 
   const handleEndTimeBlur = () => {
@@ -156,6 +202,13 @@ function BookingFormPage() {
 
     if (!form.bookingDate || !form.startTime || !form.endTime || !form.expectedAttendees || !form.purpose.trim()) {
       setMessage({ type: "error", text: "Please fill all required fields." });
+      return;
+    }
+
+    const startTimeValidationError = validateStartTime(form.startTime);
+    if (startTimeValidationError) {
+      setStartTimeError(startTimeValidationError);
+      setMessage({ type: "error", text: startTimeValidationError });
       return;
     }
 
@@ -181,15 +234,17 @@ function BookingFormPage() {
       return;
     }
 
-    if (form.startTime >= form.endTime) {
-      setMessage({ type: "error", text: "End time must be after start time." });
+    const startTimeOrderError = validateStartTime(form.startTime, form.endTime);
+    if (startTimeOrderError) {
+      setStartTimeError(startTimeOrderError);
+      setMessage({ type: "error", text: startTimeOrderError });
       return;
     }
 
-    const endTimeValidationError = validateEndTime(form.endTime);
-    if (endTimeValidationError) {
-      setEndTimeError(endTimeValidationError);
-      setMessage({ type: "error", text: endTimeValidationError });
+    const endTimeOrderError = validateEndTime(form.endTime, form.startTime);
+    if (endTimeOrderError) {
+      setEndTimeError(endTimeOrderError);
+      setMessage({ type: "error", text: endTimeOrderError });
       return;
     }
 
@@ -208,6 +263,7 @@ function BookingFormPage() {
         purpose: ""
       });
       setAttendeesError("");
+      setStartTimeError("");
       setEndTimeError("");
     } catch (error) {
       const backendMessage = error?.response?.data?.message;
@@ -298,9 +354,13 @@ function BookingFormPage() {
               name="startTime"
               value={form.startTime}
               onChange={handleChange}
-              min={form.bookingDate === today ? nowTime : undefined}
+              onBlur={handleStartTimeBlur}
+              min={form.bookingDate === today ? (nowTime > MIN_BOOKING_TIME ? nowTime : MIN_BOOKING_TIME) : MIN_BOOKING_TIME}
+              max={MAX_BOOKING_TIME}
+              className={startTimeError ? "booking-input-error" : ""}
               required
             />
+            {startTimeError ? <span className="booking-field-error">{startTimeError}</span> : null}
           </label>
 
           <label className="booking-field">
@@ -312,7 +372,7 @@ function BookingFormPage() {
               onChange={handleChange}
               onBlur={handleEndTimeBlur}
               min={form.startTime || undefined}
-              max="17:00"
+              max={MAX_BOOKING_TIME}
               className={endTimeError ? "booking-input-error" : ""}
               required
             />

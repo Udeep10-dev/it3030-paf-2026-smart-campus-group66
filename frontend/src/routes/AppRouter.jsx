@@ -12,6 +12,9 @@ import BookingFormPage from "../pages/booking/BookingFormPage";
 import BookingListPage from "../pages/booking/BookingListPage";
 
 import TicketListPage from "../pages/tickets/TicketListPage";
+import TicketCreatePage from "../pages/tickets/TicketCreatePage";
+import TicketDetailsPage from "../pages/tickets/TicketDetailsPage";
+
 import NotificationPage from "../pages/notifications/NotificationPage";
 import AdminNotificationPage from "../pages/notifications/AdminNotificationPage";
 
@@ -48,6 +51,16 @@ function AppRouter() {
       <Route path="/tickets" element={
         <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
           <TicketListPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/tickets/new" element={
+        <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
+          <TicketCreatePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/tickets/:id" element={
+        <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
+          <TicketDetailsPage />
         </ProtectedRoute>
       } />
 
