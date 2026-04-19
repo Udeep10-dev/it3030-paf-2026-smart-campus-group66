@@ -1,223 +1,194 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getNotifications, markAsRead } from "../../services/notificationService";
+﻿import { useEffect, useState } from "react";
+import api from "../../api/axios";
+
+const getToken = () => localStorage.getItem("token");
+const headers = () => ({ Authorization: `Bearer ${getToken()}` });
 
 const typeMeta = {
-  BOOKING_APPROVED: { label: "Booking Approved", icon: "✅", accent: "#0d9488" },
-  BOOKING_REJECTED: { label: "Booking Rejected", icon: "❌", accent: "#ef4444" },
-  TICKET_ASSIGNED:  { label: "Ticket Assigned",  icon: "🎫", accent: "#2563eb" },
-  TICKET_UPDATED:   { label: "Ticket Updated",   icon: "🔄", accent: "#f59e0b" },
-  GENERAL:          { label: "General",           icon: "📢", accent: "#6366f1" },
+  BOOKING_APPROVED: { label: "Booking Approved", color: "#fff", bg: "linear-gradient(135deg,#10b981,#059669)", icon: "✅" },
+  BOOKING_REJECTED: { label: "Booking Rejected", color: "#fff", bg: "linear-gradient(135deg,#ef4444,#dc2626)", icon: "❌" },
+  TICKET_ASSIGNED:  { label: "Ticket Assigned",  color: "#fff", bg: "linear-gradient(135deg,#3b82f6,#2563eb)", icon: "🎫" },
+  TICKET_UPDATED:   { label: "Ticket Updated",   color: "#fff", bg: "linear-gradient(135deg,#f59e0b,#d97706)", icon: "🔄" },
+  GENERAL:          { label: "General",           color: "#fff", bg: "linear-gradient(135deg,#8b5cf6,#7c3aed)", icon: "📢" },
 };
 
-function getWeekDays() {
+const toDateKey = (d) => { const dt = new Date(d); return `${dt.getFullYear()}-${dt.getMonth()}-${dt.getDate()}`; };
+const fmt = (d) => d ? new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "";
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+
+const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function MiniCalendar({ notifications, selectedDate, onSelect }) {
   const today = new Date();
-  const day = today.getDay(); // 0=Sun
-  const days = [];
-  const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - day + i);
-    days.push({ label: labels[i], date: d.getDate(), full: d, isToday: i === day });
-  }
-  return days;
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const dotDays = new Set(notifications.map(n => n.createdAt ? toDateKey(n.createdAt) : null).filter(Boolean));
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const prev = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y=>y-1); } else setViewMonth(m=>m-1); };
+  const next = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y=>y+1); } else setViewMonth(m=>m+1); };
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  return (
+    <div style={{ background: "#1e1b4b", borderRadius: 20, padding: "20px 18px", width: 260, flexShrink: 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <button onClick={prev} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 14 }}>‹</button>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{MONTHS[viewMonth]} {viewYear}</span>
+        <button onClick={next} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 14 }}>›</button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3, marginBottom: 8 }}>
+        {DAYS.map(d => <div key={d} style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 600 }}>{d}</div>)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 3 }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={`e${i}`} />;
+          const key = `${viewYear}-${viewMonth}-${day}`;
+          const isToday = day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+          const hasDot = dotDays.has(key);
+          const isSelected = selectedDate && toDateKey(selectedDate) === key;
+          return (
+            <div key={key} onClick={() => onSelect(isSelected ? null : new Date(viewYear, viewMonth, day))}
+              style={{ position: "relative", textAlign: "center", padding: "6px 0", borderRadius: 8, fontSize: 12,
+                fontWeight: isToday ? 800 : 400, cursor: hasDot ? "pointer" : "default",
+                background: isSelected ? "linear-gradient(135deg,#818cf8,#6366f1)" : isToday ? "rgba(255,255,255,0.15)" : "transparent",
+                color: isSelected || isToday ? "#fff" : "rgba(255,255,255,0.7)" }}>
+              {day}
+              {hasDot && <span style={{ position: "absolute", bottom: 1, left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: isSelected ? "#fff" : "#818cf8", display: "block" }} />}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>Summary</div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#818cf8" }}>{notifications.length}</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Total</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#f59e0b" }}>{notifications.filter(n=>!n.read).length}</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Unread</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#10b981" }}>{notifications.filter(n=>n.read).length}</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Read</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function isSameDay(a, b) {
-  return a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-}
-
-function formatTime(dateStr) {
-  if (!dateStr) return "";
-  return new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-}
-
-export default function NotificationPage() {
+function NotificationPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(new Date());
-  const [filter, setFilter] = useState("all");
-  const navigate = useNavigate();
-  const weekDays = getWeekDays();
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
-    getNotifications()
+    api.get("/notifications", { headers: headers() })
       .then(res => setNotifications(res.data))
-      .catch(err => console.error(err))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  const handleMarkAsRead = (id) => {
-    markAsRead(id).then(() =>
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = (id) => {
+    api.patch(`/notifications/${id}/read`, {}, { headers: headers() })
+      .then(res => setNotifications(prev => prev.map(n => n.id === id ? res.data : n)))
+      .catch(console.error);
   };
 
-  const handleMarkAllAsRead = () => {
-    Promise.all(notifications.filter(n => !n.read).map(n => markAsRead(n.id)))
-      .then(() => setNotifications(prev => prev.map(n => ({ ...n, read: true }))));
-  };
-
-  const filtered = notifications.filter(n => {
-    const matchDay = n.createdAt ? isSameDay(new Date(n.createdAt), selectedDay) : false;
-    const matchFilter = filter === "unread" ? !n.read : true;
-    return matchDay && matchFilter;
-  });
+  const markAllRead = () => notifications.filter(n => !n.read).forEach(n => markAsRead(n.id));
+  const unread = notifications.filter(n => !n.read).length;
+  const filtered = selectedDate ? notifications.filter(n => n.createdAt && toDateKey(n.createdAt) === toDateKey(selectedDate)) : notifications;
+  const grouped = filtered.reduce((acc, n) => { const key = fmtDate(n.createdAt); if (!acc[key]) acc[key] = []; acc[key].push(n); return acc; }, {});
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Inter', sans-serif" }}>
-
-      {/* Header */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "16px 24px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button
-              onClick={() => navigate("/dashboard")}
-              style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid #e2e8f0", background: "#f8fafc", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}
-            >←</button>
-            <span style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Notifications</span>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#0f0c29,#302b63,#24243e)", fontFamily: "'Inter',sans-serif" }}>
+      <div style={{ padding: "32px 40px 24px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", background: "rgba(129,140,248,0.15)", pointerEvents: "none" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#818cf8,#6366f1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, boxShadow: "0 4px 20px rgba(99,102,241,0.5)" }}>🔔</div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>Notifications</h1>
+              <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.45)" }}>Smart Campus · Your activity feed</p>
+            </div>
           </div>
-          <div style={{ position: "relative" }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: "#e0f2fe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🔔</div>
-            {unreadCount > 0 && (
-              <span style={{ position: "absolute", top: -4, right: -4, background: "#0ea5e9", color: "#fff", fontSize: 10, fontWeight: 700, borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {unreadCount}
-              </span>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {unread > 0 && (
+              <>
+                <div style={{ padding: "6px 14px", borderRadius: 20, background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", color: "#fbbf24", fontSize: 12, fontWeight: 700 }}>{unread} unread</div>
+                <button onClick={markAllRead} style={{ padding: "6px 16px", borderRadius: 20, background: "rgba(129,140,248,0.2)", border: "1px solid rgba(129,140,248,0.4)", color: "#a5b4fc", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Mark all read</button>
+              </>
             )}
           </div>
         </div>
-
-        {/* Week calendar strip */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {weekDays.map((d, i) => {
-            const isSelected = isSameDay(d.full, selectedDay);
-            return (
-              <button
-                key={i}
-                onClick={() => setSelectedDay(d.full)}
-                style={{
-                  flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-                  padding: "8px 4px", borderRadius: 12, border: "none", cursor: "pointer",
-                  background: isSelected ? "#0ea5e9" : "transparent",
-                  transition: "all .15s"
-                }}
-              >
-                <span style={{ fontSize: 11, fontWeight: 500, color: isSelected ? "rgba(255,255,255,0.85)" : "#94a3b8", marginBottom: 4 }}>{d.label}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: isSelected ? "#fff" : d.isToday ? "#0ea5e9" : "#1e293b" }}>{d.date}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
-
-      {/* Filter tabs */}
-      <div style={{ display: "flex", gap: 0, background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "0 24px" }}>
-        {["all", "unread"].map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            style={{
-              padding: "12px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-              border: "none", background: "transparent",
-              color: filter === f ? "#0ea5e9" : "#94a3b8",
-              borderBottom: filter === f ? "2px solid #0ea5e9" : "2px solid transparent",
-              transition: "all .15s"
-            }}
-          >
-            {f === "all" ? "All" : `Unread (${unreadCount})`}
-          </button>
-        ))}
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllAsRead}
-            style={{ marginLeft: "auto", padding: "12px 0", fontSize: 12, fontWeight: 600, color: "#0ea5e9", border: "none", background: "transparent", cursor: "pointer" }}
-          >
-            Mark all read
-          </button>
-        )}
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: "16px 20px", maxWidth: 720, margin: "0 auto" }}>
-
-        {/* Date label */}
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 12 }}>
-          {selectedDay.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-        </p>
-
-        {loading && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
-            <div style={{ width: 28, height: 28, border: "3px solid #e2e8f0", borderTop: "3px solid #0ea5e9", borderRadius: "50%", animation: "spin .7s linear infinite" }} />
-          </div>
-        )}
-
-        {!loading && filtered.length === 0 && (
-          <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", padding: "48px 24px", textAlign: "center" }}>
-            <p style={{ fontSize: 36, margin: "0 0 10px" }}>🔕</p>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 600, color: "#1e293b" }}>No notifications</p>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#94a3b8" }}>Nothing for this day</p>
-          </div>
-        )}
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map(n => {
-            const meta = typeMeta[n.type] || typeMeta.GENERAL;
-            return (
-              <div
-                key={n.id}
-                style={{
-                  background: n.read ? "#fff" : "#f0f9ff",
-                  borderRadius: 16,
-                  border: "1px solid",
-                  borderColor: n.read ? "#e2e8f0" : "#bae6fd",
-                  padding: "14px 16px",
-                  display: "flex", alignItems: "center", gap: 14,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
-                }}
-              >
-                {/* Icon */}
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                  background: "#f1f5f9", border: "1px solid #e2e8f0",
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20
-                }}>
-                  {meta.icon}
+      <div style={{ padding: "0 40px 40px", display: "flex", gap: 24, alignItems: "flex-start", maxWidth: 1200, margin: "0 auto" }}>
+        <MiniCalendar notifications={notifications} selectedDate={selectedDate} onSelect={setSelectedDate} />
+        <div style={{ flex: 1 }}>
+          {selectedDate && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 16, padding: "7px 14px", borderRadius: 20, background: "rgba(129,140,248,0.2)", border: "1px solid rgba(129,140,248,0.35)", color: "#a5b4fc", fontSize: 13, fontWeight: 600 }}>
+              📅 {selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              <span onClick={() => setSelectedDate(null)} style={{ cursor: "pointer", opacity: 0.6, fontSize: 12 }}>✕</span>
+            </div>
+          )}
+          {loading ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
+              <div style={{ width: 32, height: 32, border: "3px solid rgba(255,255,255,0.1)", borderTop: "3px solid #818cf8", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <div style={{ fontSize: 64, marginBottom: 16 }}>🌙</div>
+              <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 16, margin: 0 }}>{selectedDate ? "Nothing on this day" : "You're all caught up"}</p>
+            </div>
+          ) : (
+            Object.entries(grouped).map(([date, items]) => (
+              <div key={date} style={{ marginBottom: 28 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{date}</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{items.length}</span>
                 </div>
-
-                {/* Text */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: n.read ? 400 : 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {n.message}
-                  </p>
-                  <p style={{ margin: 0, fontSize: 12, color: "#94a3b8" }}>
-                    {meta.label} · {formatTime(n.createdAt)}
-                  </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {items.map(n => {
+                    const meta = typeMeta[n.type] || typeMeta.GENERAL;
+                    return (
+                      <div key={n.id}
+                        style={{ borderRadius: 16, overflow: "hidden", background: n.read ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)", border: n.read ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(129,140,248,0.3)", display: "flex", transition: "transform .15s, box-shadow .15s" }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.3)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}>
+                        <div style={{ width: 4, background: meta.bg, flexShrink: 0 }} />
+                        <div style={{ flex: 1, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                          <div style={{ width: 42, height: 42, borderRadius: 12, background: meta.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>{meta.icon}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: meta.bg, color: meta.color }}>{meta.label}</span>
+                              {!n.read && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#818cf8", display: "inline-block" }} />}
+                            </div>
+                            <p style={{ margin: 0, fontSize: 14, color: n.read ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.9)", lineHeight: 1.5 }}>{n.message}</p>
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, flexShrink: 0 }}>
+                            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{fmt(n.createdAt)}</span>
+                            {!n.read && (
+                              <button onClick={() => markAsRead(n.id)} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(129,140,248,0.4)", background: "rgba(129,140,248,0.15)", color: "#a5b4fc", cursor: "pointer", fontWeight: 600 }}>Mark read</button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {/* Action */}
-                {!n.read && (
-                  <button
-                    onClick={() => handleMarkAsRead(n.id)}
-                    style={{
-                      flexShrink: 0, fontSize: 12, fontWeight: 600,
-                      padding: "7px 14px", borderRadius: 10,
-                      border: "1.5px solid #bae6fd", background: "#fff",
-                      color: "#0ea5e9", cursor: "pointer", whiteSpace: "nowrap"
-                    }}
-                  >
-                    Mark read
-                  </button>
-                )}
               </div>
-            );
-          })}
+            ))
+          )}
         </div>
       </div>
-
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
+
+export default NotificationPage;
