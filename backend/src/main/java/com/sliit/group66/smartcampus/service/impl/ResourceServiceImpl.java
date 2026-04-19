@@ -6,6 +6,7 @@ import com.sliit.group66.smartcampus.enums.ResourceStatus;
 import com.sliit.group66.smartcampus.repository.ResourceRepository;
 import com.sliit.group66.smartcampus.service.ResourceService;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -61,7 +62,7 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setType(dto.getType());
         resource.setCapacity(dto.getCapacity());
         resource.setLocation(dto.getLocation());
-
+        resource.setCategory(dto.getCategory());
         resource.setStatus(
                 dto.getStatus() != null
                         ? ResourceStatus.valueOf(dto.getStatus().toUpperCase())
@@ -87,7 +88,7 @@ public class ResourceServiceImpl implements ResourceService {
         resource.setType(dto.getType());
         resource.setCapacity(dto.getCapacity());
         resource.setLocation(dto.getLocation());
-
+        resource.setCategory(dto.getCategory());
         resource.setAvailabilityStart(dto.getAvailabilityStart());
         resource.setAvailabilityEnd(dto.getAvailabilityEnd());
 
@@ -114,6 +115,7 @@ public class ResourceServiceImpl implements ResourceService {
                 .name(resource.getName())
                 .type(resource.getType())
                 .capacity(resource.getCapacity())
+                .category(resource.getCategory())
                 .location(resource.getLocation())
                 .availabilityStart(resource.getAvailabilityStart())
                 .availabilityEnd(resource.getAvailabilityEnd())
