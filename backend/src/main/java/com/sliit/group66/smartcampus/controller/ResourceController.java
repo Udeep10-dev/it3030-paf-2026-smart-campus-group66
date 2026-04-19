@@ -1,6 +1,6 @@
 package com.sliit.group66.smartcampus.controller;
 
-import com.sliit.group66.smartcampus.dto.ResourceDTO;
+import com.sliit.group66.smartcampus.dto.resource.ResourceDTO;
 import com.sliit.group66.smartcampus.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/resources")
+@RequestMapping({"/resources", "/api/resources"})
 @RequiredArgsConstructor
 @CrossOrigin
 public class ResourceController {
