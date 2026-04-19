@@ -13,6 +13,7 @@ import BookingListPage from "../pages/booking/BookingListPage";
 
 import NotificationPage from "../pages/notifications/NotificationPage";
 import AdminNotificationPage from "../pages/notifications/AdminNotificationPage";
+import ResourceMap from "../pages/resources/ResourceMap";
 
 import TicketListPage from "../pages/tickets/TicketListPage";
 import TicketCreatePage from "../pages/tickets/TicketCreatePage";
@@ -32,6 +33,11 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
+      {/* Resources */}
+      <Route path="/resources" element={<ResourceListPage />} />
+      <Route path="/resources/map" element={<ResourceMap />} />
+
+      <Route path="/admin/resources" element={<ResourceAdminPage />} />
 
       <Route
         path="/notifications"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ResourceCard from "../../components/resources/ResourceCard";
 import ResourceFilter from "../../components/resources/ResourceFilter";
 import resourceService from "../../services/resourceService";
+import { Link } from "react-router-dom";
 
 const ResourceListPage = () => {
   const [resources, setResources] = useState([]);
@@ -30,6 +31,12 @@ const ResourceListPage = () => {
         </h1>
       </div>
       <ResourceFilter setFilters={setFilters} />
+      <Link
+        to="/resources/map"
+        className="text-sm text-orange-500 hover:underline mb-4 inline-block"
+      >
+        View on Map
+      </Link>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {resources.map((r) => (
           <ResourceCard key={r.id} resource={r} />
