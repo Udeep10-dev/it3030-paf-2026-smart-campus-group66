@@ -1,12 +1,12 @@
 import { useState } from "react";
 
 const statusBadge = {
-  ACTIVE: {
+  AVAILABLE: {
     badge: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
     dot: "bg-emerald-400",
     label: "Active",
   },
-  OUT_OF_SERVICE: {
+  BOOKED: {
     badge: "bg-red-50 text-red-700 ring-1 ring-red-200",
     dot: "bg-red-400",
     label: "Out of service",
@@ -29,14 +29,16 @@ const ResourceForm = ({
     type: "",
     capacity: "",
     location: "",
-    status: "ACTIVE",
+    status: "AVAILABLE",
+    availabilityStart: "",
+    availabilityEnd: "",
     ...initialData,
   });
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const badge = statusBadge[form.status] || statusBadge.ACTIVE;
+  const badge = statusBadge[form.status] || statusBadge.AVAILABLE;
 
   return (
     <div
@@ -132,8 +134,8 @@ const ResourceForm = ({
               onChange={handleChange}
               className={inputCls + " cursor-pointer appearance-none"}
             >
-              <option value="ACTIVE">Active</option>
-              <option value="OUT_OF_SERVICE">Out of service</option>
+              <option value="AVAILABLE">Active</option>
+              <option value="BOOKED">Out of service</option>
             </select>
             <span
               className={`inline-flex items-center gap-1.5 mt-2 text-xs font-semibold px-2.5 py-1 rounded-full ${badge.badge}`}
@@ -142,6 +144,33 @@ const ResourceForm = ({
               {badge.label}
             </span>
           </div>
+          {/* <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
+                Start Time
+              </label>
+              <input
+                type="time"
+                name="availabilityStart"
+                value={form.availabilityStart}
+                onChange={handleChange}
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold mb-1.5 text-orange-700">
+                End Time
+              </label>
+              <input
+                type="time"
+                name="availabilityEnd"
+                value={form.availabilityEnd}
+                onChange={handleChange}
+                className={inputCls}
+              />
+            </div>
+          </div> */}
         </div>
 
         {/* Footer */}
