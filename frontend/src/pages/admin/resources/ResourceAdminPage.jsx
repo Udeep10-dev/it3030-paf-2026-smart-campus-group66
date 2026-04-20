@@ -50,15 +50,15 @@ const ResourceAdminPage = () => {
     try {
       if (editingResource) {
         await resourceService.update(editingResource.id, form);
-        toast.success('Successfully updated!');
+        toast.success("Successfully updated!");
       } else {
         await resourceService.create(form);
-        toast.success('Successfully created!');
+        toast.success("Successfully created!");
       }
       closeModal();
       fetchResources();
     } catch (error) {
-      toast.error('Operation failed!');
+      toast.error("Operation failed!");
     }
   };
 
@@ -66,11 +66,11 @@ const ResourceAdminPage = () => {
     if (!deleteTarget) return;
     try {
       await resourceService.delete(deleteTarget.id);
-      toast.success('Resource deleted!');
+      toast.success("Resource deleted!");
       setDeleteTarget(null);
       fetchResources();
     } catch {
-      toast.error('Failed to delete!');
+      toast.error("Failed to delete!");
     }
   };
 
@@ -79,51 +79,57 @@ const ResourceAdminPage = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-[#F8FAFC]">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-1.5 bg-[#4FD1C5] rounded-full hidden sm:block"></div>
-          <div>
-            <h1 className="text-2xl font-black text-[#123A7A] tracking-tight">
-              Resource Management
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] font-black px-2.5 py-0.5 rounded-md bg-[#E6FFFA] text-[#0F766E] uppercase border border-[#B2F5EA]">
-                Administrator
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Control Panel
-              </span>
+    <div className="min-h-screen bg-[#F8FAFC] px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* HEADER */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-1.5 bg-[#4FD1C5] rounded-full hidden sm:block" />
+
+            <div>
+              <h1 className="text-2xl font-black text-[#123A7A] tracking-tight">
+                Resource Management
+              </h1>
+
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-black px-2.5 py-0.5 rounded-md bg-[#E6FFFA] text-[#0F766E] uppercase border border-[#B2F5EA]">
+                  Administrator
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Control Panel
+                </span>
+              </div>
             </div>
           </div>
+
+          {/* ACTION BUTTON */}
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 h-11 px-5 rounded-xl text-sm font-semibold text-white 
+          bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] 
+          hover:opacity-90 active:scale-95 transition shadow-md"
+          >
+            <span className="text-xl leading-none">+</span>
+            Add Resource
+          </button>
         </div>
 
-        {/* Add Resource Button - Primary Gradient Style */}
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 h-11 px-6 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] hover:scale-105 active:scale-95 transition-all shadow-lg shadow-teal-100 cursor-pointer"
-        >
-          <span className="text-xl font-light">+</span>
-          Add Resource
-        </button>
+        {/* FILTER */}
+        <div className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+          <ResourceFilter setFilters={setFilters} />
+        </div>
+
+        {/* TABLE */}
+        <div className="rounded-2xl bg-white shadow-sm border border-slate-100 overflow-hidden">
+          <ResourceTable
+            resources={resources}
+            onEdit={openEdit}
+            onDelete={openDelete}
+          />
+        </div>
       </div>
 
-      {/* Filter Section Container - Styled for Admin */}
-      <div className="mb-8 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
-        <ResourceFilter setFilters={setFilters} />
-      </div>
-
-      {/* Table Section Container */}
-      <div className="rounded-2xl bg-white shadow-sm border border-slate-100 overflow-hidden">
-        <ResourceTable
-          resources={resources}
-          onEdit={openEdit}
-          onDelete={openDelete}
-        />
-      </div>
-
-      {/* Modals */}
+      {/* MODALS */}
       {modalOpen && (
         <ResourceForm
           key={editingResource?.id ?? "new"}
