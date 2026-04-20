@@ -24,7 +24,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                                         Authentication authentication) throws IOException {
         try {
             OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-            String email = oAuth2User.getAttribute("email");
+            String email = normalizeEmail(oAuth2User.getAttribute("email"));
 
             User user = userRepository.findByEmail(email).orElse(null);
             if (user == null) {
@@ -38,5 +38,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             e.printStackTrace();
             response.sendRedirect("http://localhost:5173/login?error=server_error");
         }
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 }

@@ -32,7 +32,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtUtil.isTokenValid(token)) {
-                String email = jwtUtil.extractEmail(token);
+                String email = normalizeEmail(jwtUtil.extractEmail(token));
                 userRepository.findByEmail(email).ifPresent(user -> {
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
@@ -46,5 +46,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 }

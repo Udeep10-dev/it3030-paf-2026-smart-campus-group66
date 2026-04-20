@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import TicketCard from "../../components/tickets/TicketCard";
@@ -45,7 +46,9 @@ function TicketListPage() {
       setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || "Failed to load tickets.");
+      const message = err?.response?.data?.message || "Failed to load tickets.";
+      setError(message);
+      toast.error(message);
       setTickets([]);
     } finally {
       setLoading(false);

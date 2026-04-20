@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import resourceService from "../../services/resourceService";
 import ticketService from "../../services/ticketService";
@@ -17,7 +18,6 @@ function TicketCreatePage() {
   const [form, setForm] = useState(initialForm);
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);
 
@@ -35,10 +35,9 @@ function TicketCreatePage() {
         const rows = Array.isArray(res?.data) ? res.data : [];
         setResources(rows);
       } catch {
-        setMessage({
-          type: "error",
-          text: "Resources could not be loaded. You can still submit a location-based ticket.",
-        });
+        toast.error(
+          "Resources could not be loaded. You can still submit a location-based ticket."
+        );
       } finally {
         setLoadingResources(false);
       }
@@ -58,7 +57,6 @@ function TicketCreatePage() {
         resourceId: value,
         location: resource?.location || prev.location,
       }));
-      setMessage({ type: "", text: "" });
       return;
     }
 
@@ -71,14 +69,10 @@ function TicketCreatePage() {
   const handleFileChange = (e) => {
     const selected = Array.from(e.target.files || []);
     if (selected.length > 3) {
-      setMessage({
-        type: "error",
-        text: "You can upload a maximum of 3 attachments.",
-      });
+      toast.error("You can upload a maximum of 3 attachments.");
       return;
     }
 
-    setMessage({ type: "", text: "" });
     setFiles(selected);
   };
 
@@ -86,15 +80,11 @@ function TicketCreatePage() {
     e.preventDefault();
 
     if (!form.resourceId && !form.location.trim()) {
-      setMessage({
-        type: "error",
-        text: "Please provide either a Resource ID or a location.",
-      });
+      toast.error("Please provide either a resource or a location.");
       return;
     }
 
     setSubmitting(true);
-    setMessage({ type: "", text: "" });
 
     try {
       const payload = {
@@ -118,22 +108,17 @@ function TicketCreatePage() {
         }
       }
 
-      setMessage({
-        type: "success",
-        text: "Ticket created successfully.",
-      });
+      toast.success("Ticket created successfully.");
 
       setTimeout(() => {
         navigate(`/tickets/${ticketId}`);
       }, 1000);
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text:
-          err?.response?.data?.message ||
-          "Failed to create ticket. Please try again.",
-      });
+      toast.error(
+        err?.response?.data?.message ||
+          "Failed to create ticket. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -158,18 +143,6 @@ function TicketCreatePage() {
           onSubmit={handleSubmit}
           className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8"
         >
-          {message.text ? (
-            <div
-              className={`mb-5 rounded-2xl px-4 py-3 text-sm font-medium ${
-                message.type === "success"
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-red-50 text-red-700"
-              }`}
-            >
-              {message.text}
-            </div>
-          ) : null}
-
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#123A7A]">

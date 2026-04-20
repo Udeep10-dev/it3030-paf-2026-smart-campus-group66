@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ticketService from "../../services/ticketService";
@@ -44,7 +45,6 @@ function TicketDetailsPage() {
   const [attachmentActionId, setAttachmentActionId] = useState(null);
   const [uploadInputKey, setUploadInputKey] = useState(0);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState({ type: "", text: "" });
   const [assignableUsers, setAssignableUsers] = useState([]);
 
   const loadDetails = async ({ showSpinner = true } = {}) => {
@@ -75,9 +75,10 @@ function TicketDetailsPage() {
       setError("");
     } catch (err) {
       console.error(err);
-      setError(
-        err?.response?.data?.message || "Failed to load ticket details."
-      );
+      const message =
+        err?.response?.data?.message || "Failed to load ticket details.";
+      setError(message);
+      toast.error(message);
     } finally {
       if (showSpinner) {
         setLoading(false);
@@ -101,6 +102,9 @@ function TicketDetailsPage() {
         setAssignableUsers(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error(err);
+        toast.error(
+          err?.response?.data?.message || "Failed to load assignable users."
+        );
       }
     };
 
@@ -122,17 +126,13 @@ function TicketDetailsPage() {
 
     try {
       setCommentSubmitting(true);
-      setMessage({ type: "", text: "" });
       await ticketService.addComment(id, { commentText: newComment.trim() });
       setNewComment("");
-      setMessage({ type: "success", text: "Comment added successfully." });
+      toast.success("Comment added successfully.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to add comment.",
-      });
+      toast.error(err?.response?.data?.message || "Failed to add comment.");
     } finally {
       setCommentSubmitting(false);
     }
@@ -141,17 +141,13 @@ function TicketDetailsPage() {
   const handleUpdateComment = async (commentId, commentText) => {
     try {
       setCommentActionId(commentId);
-      setMessage({ type: "", text: "" });
       await ticketService.updateComment(commentId, { commentText });
-      setMessage({ type: "success", text: "Comment updated successfully." });
+      toast.success("Comment updated successfully.");
       await loadDetails({ showSpinner: false });
       return true;
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to update comment.",
-      });
+      toast.error(err?.response?.data?.message || "Failed to update comment.");
       return false;
     } finally {
       setCommentActionId(null);
@@ -167,16 +163,12 @@ function TicketDetailsPage() {
 
     try {
       setCommentActionId(commentId);
-      setMessage({ type: "", text: "" });
       await ticketService.deleteComment(commentId);
-      setMessage({ type: "success", text: "Comment deleted successfully." });
+      toast.success("Comment deleted successfully.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to delete comment.",
-      });
+      toast.error(err?.response?.data?.message || "Failed to delete comment.");
     } finally {
       setCommentActionId(null);
     }
@@ -184,27 +176,22 @@ function TicketDetailsPage() {
 
   const handleAssignTicket = async () => {
     if (!assignForm.assignedToUserId) {
-      setMessage({
-        type: "error",
-        text: "Please select a staff or admin user before assigning the ticket.",
-      });
+      toast.error(
+        "Please select a staff or admin user before assigning the ticket."
+      );
       return;
     }
 
     try {
       setAssignSubmitting(true);
-      setMessage({ type: "", text: "" });
       await ticketService.assignTicket(id, {
         assignedToUserId: Number(assignForm.assignedToUserId),
       });
-      setMessage({ type: "success", text: "Ticket assigned successfully." });
+      toast.success("Ticket assigned successfully.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to assign ticket.",
-      });
+      toast.error(err?.response?.data?.message || "Failed to assign ticket.");
     } finally {
       setAssignSubmitting(false);
     }
@@ -212,10 +199,7 @@ function TicketDetailsPage() {
 
   const handleStatusUpdate = async () => {
     if (!statusForm.status) {
-      setMessage({
-        type: "error",
-        text: "Please select the next status first.",
-      });
+      toast.error("Please select the next status first.");
       return;
     }
 
@@ -223,10 +207,7 @@ function TicketDetailsPage() {
       statusForm.status === "REJECTED" &&
       !statusForm.rejectionReason.trim()
     ) {
-      setMessage({
-        type: "error",
-        text: "Rejection reason is required for rejected tickets.",
-      });
+      toast.error("Rejection reason is required for rejected tickets.");
       return;
     }
 
@@ -234,16 +215,12 @@ function TicketDetailsPage() {
       statusForm.status === "RESOLVED" &&
       !statusForm.resolutionNotes.trim()
     ) {
-      setMessage({
-        type: "error",
-        text: "Resolution notes are required for resolved tickets.",
-      });
+      toast.error("Resolution notes are required for resolved tickets.");
       return;
     }
 
     try {
       setStatusSubmitting(true);
-      setMessage({ type: "", text: "" });
       await ticketService.updateStatus(id, {
         status: statusForm.status,
         rejectionReason:
@@ -255,14 +232,11 @@ function TicketDetailsPage() {
             ? statusForm.resolutionNotes.trim()
             : null,
       });
-      setMessage({ type: "success", text: "Ticket status updated." });
+      toast.success("Ticket status updated.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to update status.",
-      });
+      toast.error(err?.response?.data?.message || "Failed to update status.");
     } finally {
       setStatusSubmitting(false);
     }
@@ -272,14 +246,12 @@ function TicketDetailsPage() {
     const files = Array.from(event.target.files || []);
 
     if (files.length > remainingAttachmentSlots) {
-      setMessage({
-        type: "error",
-        text: `You can upload up to ${remainingAttachmentSlots} more attachment(s).`,
-      });
+      toast.error(
+        `You can upload up to ${remainingAttachmentSlots} more attachment(s).`
+      );
       return;
     }
 
-    setMessage({ type: "", text: "" });
     setSelectedFiles(files);
   };
 
@@ -288,7 +260,6 @@ function TicketDetailsPage() {
 
     try {
       setUploadSubmitting(true);
-      setMessage({ type: "", text: "" });
 
       for (const file of selectedFiles) {
         await ticketService.uploadAttachment(id, file);
@@ -296,17 +267,13 @@ function TicketDetailsPage() {
 
       setSelectedFiles([]);
       setUploadInputKey((prev) => prev + 1);
-      setMessage({
-        type: "success",
-        text: "Attachment(s) uploaded successfully.",
-      });
+      toast.success("Attachment(s) uploaded successfully.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to upload attachments.",
-      });
+      toast.error(
+        err?.response?.data?.message || "Failed to upload attachments."
+      );
     } finally {
       setUploadSubmitting(false);
     }
@@ -321,19 +288,14 @@ function TicketDetailsPage() {
 
     try {
       setAttachmentActionId(attachmentId);
-      setMessage({ type: "", text: "" });
       await ticketService.deleteAttachment(attachmentId);
-      setMessage({
-        type: "success",
-        text: "Attachment deleted successfully.",
-      });
+      toast.success("Attachment deleted successfully.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      setMessage({
-        type: "error",
-        text: err?.response?.data?.message || "Failed to delete attachment.",
-      });
+      toast.error(
+        err?.response?.data?.message || "Failed to delete attachment."
+      );
     } finally {
       setAttachmentActionId(null);
     }
@@ -380,18 +342,6 @@ function TicketDetailsPage() {
             Back to Tickets
           </button>
         </div>
-
-        {message.text ? (
-          <div
-            className={`mb-6 rounded-2xl px-4 py-3 text-sm font-medium ${
-              message.type === "success"
-                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                : "bg-red-50 text-red-700 ring-1 ring-red-200"
-            }`}
-          >
-            {message.text}
-          </div>
-        ) : null}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
