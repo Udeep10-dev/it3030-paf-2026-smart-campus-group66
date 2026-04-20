@@ -8,6 +8,9 @@ import com.sliit.group66.smartcampus.repository.UserRepository;
 import com.sliit.group66.smartcampus.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -18,6 +21,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification createNotification(Long userId, String message, NotificationType type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

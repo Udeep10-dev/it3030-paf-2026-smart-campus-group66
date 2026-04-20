@@ -232,11 +232,20 @@ function TicketDetailsPage() {
             ? statusForm.resolutionNotes.trim()
             : null,
       });
+      setStatusForm({
+        status: "",
+        rejectionReason: "",
+        resolutionNotes: "",
+      });
       toast.success("Ticket status updated.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.message || "Failed to update status.");
+      toast.error(
+        err?.response?.status === 401
+          ? "Status update was rejected with 401 Unauthorized. Your login may still be active, but the backend did not accept this admin request."
+          : err?.response?.data?.message || "Failed to update status."
+      );
     } finally {
       setStatusSubmitting(false);
     }

@@ -3,6 +3,8 @@ package com.sliit.group66.smartcampus.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,9 +24,12 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
+            .securityMatcher("/api/**", "/uploads/**")
             .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
@@ -37,8 +42,8 @@ public class SecurityConfig {
                 )
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/login").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers("/api/notifications/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/users/assignable").hasAnyRole("STAFF", "ADMIN")
@@ -50,14 +55,27 @@ public class SecurityConfig {
                 .requestMatchers("/api/bookings/**").authenticated()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain oauthFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/oauth2/**", "/login/**", "/login").permitAll()
+                .anyRequest().permitAll()
+            )
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )
                 .successHandler(oAuth2LoginSuccessHandler)
                 .failureUrl("http://localhost:5173/login?error=oauth_failed")
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            );
 
         return http.build();
     }

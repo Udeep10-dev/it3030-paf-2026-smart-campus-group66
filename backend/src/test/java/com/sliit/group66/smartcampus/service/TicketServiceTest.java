@@ -127,6 +127,27 @@ class TicketServiceTest {
     }
 
     @Test
+    void adminCanMoveOpenTicketToInProgressWithoutAssignment() {
+        User reporter = createUser(10L, UserRole.STUDENT);
+        Ticket ticket = createTicket(1L, TicketStatus.OPEN, reporter, null);
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UpdateTicketStatusRequest request = new UpdateTicketStatusRequest();
+        request.setStatus(TicketStatus.IN_PROGRESS);
+
+        TicketResponse response = ticketService.updateTicketStatus(1L, request, 99L, UserRole.ADMIN);
+
+        assertEquals(TicketStatus.IN_PROGRESS, response.getStatus());
+        verify(notificationService).createNotification(
+                eq(reporter.getId()),
+                eq("Your ticket TKT-1 is now IN_PROGRESS."),
+                eq(NotificationType.TICKET_UPDATED)
+        );
+    }
+
+    @Test
     void assignedStaffCanResolveTicketWithResolutionNotes() {
         User reporter = createUser(10L, UserRole.STUDENT);
         User staff = createUser(20L, UserRole.STAFF);

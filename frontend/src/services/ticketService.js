@@ -12,6 +12,13 @@ const withAuth = () => {
     : {};
 };
 
+const withJsonAuth = () => ({
+  headers: {
+    "Content-Type": "application/json",
+    ...(withAuth().headers || {}),
+  },
+});
+
 const ticketService = {
   getAll: (params = {}) => axios.get("/tickets", { params, ...withAuth() }),
 
@@ -22,10 +29,20 @@ const ticketService = {
   create: (payload) => axios.post("/tickets", payload, withAuth()),
 
   updateStatus: (id, payload) =>
-    axios.patch(`/tickets/${id}/status`, payload, withAuth()),
+    axios.request({
+      method: "patch",
+      url: `/tickets/${id}/status`,
+      data: payload,
+      ...withJsonAuth(),
+    }),
 
   assignTicket: (id, payload) =>
-    axios.patch(`/tickets/${id}/assign`, payload, withAuth()),
+    axios.request({
+      method: "patch",
+      url: `/tickets/${id}/assign`,
+      data: payload,
+      ...withJsonAuth(),
+    }),
 
   getAttachments: (ticketId) =>
     axios.get(`/tickets/${ticketId}/attachments`, withAuth()),
