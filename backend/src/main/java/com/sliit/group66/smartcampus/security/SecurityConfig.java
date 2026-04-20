@@ -9,7 +9,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +28,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -43,6 +48,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/users/assignable").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.PUT,    "/api/tickets/**").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.PATCH,  "/api/tickets/**").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/tickets/**").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/api/tickets/**").authenticated()
                 .requestMatchers("/api/comments/**").authenticated()
                 .requestMatchers("/api/notifications/**").authenticated()
@@ -60,5 +68,17 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

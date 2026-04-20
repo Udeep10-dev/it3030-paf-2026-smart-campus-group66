@@ -11,7 +11,10 @@ function Navbar() {
 
   const navItems = [
     { label: "Home", to: "/" },
-    { label: "Resources", to: "/resources" },
+    {
+      label: "Resources",
+      to: currentRole === "STAFF" ? "/admin/resources" : "/resources",
+    },
     { label: "Bookings", to: "/bookings/new" },
     { label: "Tickets", to: "/tickets" },
     { label: "Notifications", to: "/notifications" },
@@ -64,8 +67,8 @@ function Navbar() {
                     isAdmin
                       ? "bg-amber-100 text-amber-700"
                       : currentRole === "STAFF"
-                      ? "bg-sky-100 text-sky-700"
-                      : "bg-slate-100 text-slate-600"
+                        ? "bg-sky-100 text-sky-700"
+                        : "bg-slate-100 text-slate-600"
                   }`}
                 >
                   {currentRole || "USER"}
@@ -127,7 +130,9 @@ function Navbar() {
             {user ? (
               <>
                 <div className="rounded-xl bg-[#3E4C59] px-4 py-3 text-sm text-slate-200">
-                  <p className="font-semibold text-white">{user.name || user.email}</p>
+                  <p className="font-semibold text-white">
+                    {user.name || user.email}
+                  </p>
                   <p className="mt-1 text-xs">{user.email}</p>
                   <p className="mt-2 text-xs uppercase tracking-wider text-[#4FD1C5]">
                     {currentRole || "USER"}

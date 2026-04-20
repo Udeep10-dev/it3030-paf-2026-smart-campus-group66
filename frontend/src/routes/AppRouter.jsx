@@ -17,6 +17,7 @@ import AdminNotificationPage from "../pages/notifications/AdminNotificationPage"
 import TicketListPage from "../pages/tickets/TicketListPage";
 import TicketCreatePage from "../pages/tickets/TicketCreatePage";
 import TicketDetailsPage from "../pages/tickets/TicketDetailsPage";
+import ResourceMapPage from "../pages/resources/ResourceMapPage";
 
 function AppRouter() {
   return (
@@ -45,8 +46,17 @@ function AppRouter() {
       <Route
         path="/resources"
         element={
-          <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
             <ResourceListPage />
+          </ProtectedRoute>
+        }
+      />
+
+        <Route
+        path="/resources/map"
+        element={
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
+            <ResourceMapPage />
           </ProtectedRoute>
         }
       />
@@ -99,7 +109,7 @@ function AppRouter() {
       <Route
         path="/admin/resources"
         element={
-          <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <ResourceAdminPage />
           </ProtectedRoute>
         }

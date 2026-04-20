@@ -1,45 +1,36 @@
-import { useState } from "react";
+import React from 'react';
 
-const ResourceFilter = ({ setFilters }) => {
-  const [type, setType] = useState("");
-  const [capacity, setCapacity] = useState("");
-  const [location, setLocation] = useState("");
-
-  const applyFilters = async () => {
-    const params = {};
-
-    if (type) params.type = type;
-    if (location) params.location = location;
-    if (capacity) params.capacity = capacity;
-
-    setFilters(params);
-  };
-
-  const inputCls =
-    "flex-1 min-w-[120px] h-9 px-3 rounded-lg text-sm bg-orange-50 border border-orange-200 " +
-    "text-orange-900 placeholder:text-orange-300 focus:outline-none focus:ring-2 " +
-    "focus:ring-orange-300 focus:border-orange-400 transition-all";
-
+const ResourceFilter = ({ setFilters, themeColor }) => {
+  // සටහන: මෙහි ඇති Tailwind classes ඔබේ පවතින ResourceFilter එකට ආදේශ කරන්න
   return (
-    <div className="flex flex-wrap gap-3 items-center p-4 bg-white rounded-2xl border border-orange-100 shadow-sm">
+    <div className="flex flex-wrap items-center gap-4">
+      {/* Input Field: Type */}
       <input
+        type="text"
         placeholder="Type (e.g. Room)"
-        className={inputCls}
-        onChange={(e) => setType(e.target.value)}
+        className="flex-1 min-w-[200px] rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm outline-none transition-all focus:border-[#4FD1C5] focus:ring-4 focus:ring-[#4FD1C5]/10"
+        onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
       />
+
+      {/* Input Field: Capacity */}
       <input
+        type="number"
         placeholder="Capacity"
-        className={inputCls}
-        onChange={(e) => setCapacity(e.target.value)}
+        className="w-32 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm outline-none transition-all focus:border-[#4FD1C5] focus:ring-4 focus:ring-[#4FD1C5]/10"
+        onChange={(e) => setFilters(prev => ({ ...prev, capacity: e.target.value }))}
       />
+
+      {/* Input Field: Location */}
       <input
+        type="text"
         placeholder="Location"
-        className={inputCls}
-        onChange={(e) => setLocation(e.target.value)}
+        className="flex-1 min-w-[200px] rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm outline-none transition-all focus:border-[#4FD1C5] focus:ring-4 focus:ring-[#4FD1C5]/10"
+        onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
       />
+
+      {/* Search Button - Hero Style Gradient */}
       <button
-        onClick={applyFilters}
-        className="h-9 px-5 rounded-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-all cursor-pointer shadow-sm shadow-orange-200"
+        className="rounded-xl bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-8 py-3 text-sm font-bold text-white shadow-lg shadow-teal-100 transition-all hover:scale-105 hover:shadow-teal-200 active:scale-95"
       >
         Search
       </button>
