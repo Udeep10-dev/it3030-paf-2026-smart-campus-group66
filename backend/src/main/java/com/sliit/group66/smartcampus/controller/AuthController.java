@@ -19,9 +19,13 @@ public class AuthController {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).body("Not authenticated");
         }
-        String email = authentication.getName();
+        String email = normalizeEmail(authentication.getName());
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return ResponseEntity.ok(user);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 }

@@ -18,9 +18,13 @@ public class AuthenticatedUserService {
             throw new ForbiddenOperationException("Authentication is required");
         }
 
-        String email = authentication.getName();
+        String email = normalizeEmail(authentication.getName());
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ForbiddenOperationException("Authenticated user not found"));
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
     }
 }

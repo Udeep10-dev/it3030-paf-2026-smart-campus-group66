@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,6 +83,44 @@ class CommentServiceTest {
         assertEquals("Updated comment", response.getCommentText());
         assertTrue(response.isEdited());
         verify(ticketCommentRepository).save(comment);
+    }
+
+    @Test
+    void adminCanCommentOnAnyTicket() {
+        User admin = createUser(99L, UserRole.ADMIN);
+        User reporter = createUser(10L, UserRole.STUDENT);
+
+        Ticket ticket = new Ticket();
+        ticket.setId(1L);
+        ticket.setTicketNumber("TKT-1");
+        ticket.setReportedBy(reporter);
+
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(userRepository.findById(99L)).thenReturn(Optional.of(admin));
+        when(ticketCommentRepository.save(any(TicketComment.class))).thenAnswer(invocation -> {
+            TicketComment saved = invocation.getArgument(0);
+            saved.setId(5L);
+            return saved;
+        });
+
+        CreateCommentRequest request = new CreateCommentRequest();
+        request.setCommentText("Admin follow-up");
+
+        var response = commentService.addComment(1L, request, 99L, UserRole.ADMIN);
+
+        assertEquals("Admin follow-up", response.getCommentText());
+        assertEquals(99L, response.getUserId());
+        verify(ticketCommentRepository).save(any(TicketComment.class));
+        verify(notificationService).createNotification(
+                reporter.getId(),
+                "New comment added to your ticket TKT-1.",
+                com.sliit.group66.smartcampus.enums.NotificationType.GENERAL
+        );
+        verify(notificationService, never()).createNotification(
+                admin.getId(),
+                "New comment added to assigned ticket TKT-1.",
+                com.sliit.group66.smartcampus.enums.NotificationType.GENERAL
+        );
     }
 
     @Test
