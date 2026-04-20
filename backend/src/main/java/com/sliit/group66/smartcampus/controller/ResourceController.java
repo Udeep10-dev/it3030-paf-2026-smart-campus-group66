@@ -8,9 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/resources", "/api/resources"})
+@RequestMapping("/api/resources")
 @RequiredArgsConstructor
-@CrossOrigin
 public class ResourceController {
 
     private final ResourceService service;
@@ -29,8 +28,7 @@ public class ResourceController {
     public List<ResourceDTO> filterResources(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String location,
-            @RequestParam(required = false) String capacity
-    ) {
+            @RequestParam(required = false) String capacity) {
         Integer cap = null;
 
         System.out.println("Filtering resources with - Type: " + type +

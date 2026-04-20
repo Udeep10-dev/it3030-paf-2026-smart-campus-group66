@@ -7,18 +7,17 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import ResourceListPage from "../pages/resources/ResourceListPage";
 // import ResourceFormPage from "../pages/resources/ResourceFormPage";
 import ResourceAdminPage from "../pages/admin/resources/ResourceAdminPage";
-import ResourceMapPage from "../pages/resources/ResourceMapPage";
 
 import BookingFormPage from "../pages/booking/BookingFormPage";
 import BookingListPage from "../pages/booking/BookingListPage";
 
 import NotificationPage from "../pages/notifications/NotificationPage";
 import AdminNotificationPage from "../pages/notifications/AdminNotificationPage";
-import ResourceMap from "../pages/resources/ResourceMap";
 
 import TicketListPage from "../pages/tickets/TicketListPage";
 import TicketCreatePage from "../pages/tickets/TicketCreatePage";
 import TicketDetailsPage from "../pages/tickets/TicketDetailsPage";
+import ResourceMapPage from "../pages/resources/ResourceMapPage";
 
 function AppRouter() {
   return (
@@ -34,10 +33,6 @@ function AppRouter() {
           </ProtectedRoute>
         }
       />
-      {/* Resources */}
-      <Route path="/resources" element={<ResourceListPage />} />
-      <Route path="/resources/map" element={<ResourceMapPage />} />
-      <Route path="/admin/resources" element={<ResourceAdminPage />} />
 
       <Route
         path="/notifications"
@@ -51,8 +46,17 @@ function AppRouter() {
       <Route
         path="/resources"
         element={
-          <ProtectedRoute allowedRoles={["STUDENT", "STAFF", "ADMIN"]}>
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
             <ResourceListPage />
+          </ProtectedRoute>
+        }
+      />
+
+        <Route
+        path="/resources/map"
+        element={
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
+            <ResourceMapPage />
           </ProtectedRoute>
         }
       />
@@ -105,7 +109,7 @@ function AppRouter() {
       <Route
         path="/admin/resources"
         element={
-          <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <ResourceAdminPage />
           </ProtectedRoute>
         }
