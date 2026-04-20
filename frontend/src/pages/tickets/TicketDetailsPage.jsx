@@ -8,9 +8,14 @@ import TicketStatusBadge from "../../components/tickets/TicketStatusBadge";
 import TicketPriorityBadge from "../../components/tickets/TicketPriorityBadge";
 import TicketAttachmentGallery from "../../components/tickets/TicketAttachmentGallery";
 import TicketCommentSection from "../../components/tickets/TicketCommentSection";
+import {
+  MAX_TICKET_ATTACHMENTS,
+  validateAssignForm,
+  validateAttachmentFiles,
+  validateCommentText,
+  validateStatusForm,
+} from "../../utils/ticketFormValidation";
 import { getNextTicketStatuses } from "../../utils/ticketTransitions";
-
-const MAX_ATTACHMENTS = 3;
 
 function TicketDetailsPage() {
   const { id } = useParams();
@@ -46,6 +51,16 @@ function TicketDetailsPage() {
   const [uploadInputKey, setUploadInputKey] = useState(0);
   const [error, setError] = useState("");
   const [assignableUsers, setAssignableUsers] = useState([]);
+  const [commentError, setCommentError] = useState("");
+  const [assignErrors, setAssignErrors] = useState({
+    assignedToUserId: "",
+  });
+  const [statusErrors, setStatusErrors] = useState({
+    status: "",
+    rejectionReason: "",
+    resolutionNotes: "",
+  });
+  const [attachmentError, setAttachmentError] = useState("");
 
   const loadDetails = async ({ showSpinner = true } = {}) => {
     if (showSpinner) {
@@ -72,6 +87,7 @@ function TicketDetailsPage() {
         rejectionReason: "",
         resolutionNotes: "",
       });
+      setAttachmentError("");
       setError("");
     } catch (err) {
       console.error(err);
@@ -113,7 +129,7 @@ function TicketDetailsPage() {
 
   const transitionOptions = getNextTicketStatuses(ticket?.status, currentUserRole);
   const remainingAttachmentSlots = Math.max(
-    MAX_ATTACHMENTS - attachments.length,
+    MAX_TICKET_ATTACHMENTS - attachments.length,
     0
   );
   const canUploadAttachments =
@@ -122,12 +138,18 @@ function TicketDetailsPage() {
     isAdmin || (isStaff && ticket?.assignedToUserId === currentUserId);
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    const nextCommentError = validateCommentText(newComment);
+    if (nextCommentError) {
+      setCommentError(nextCommentError);
+      toast.error(nextCommentError);
+      return;
+    }
 
     try {
       setCommentSubmitting(true);
       await ticketService.addComment(id, { commentText: newComment.trim() });
       setNewComment("");
+      setCommentError("");
       toast.success("Comment added successfully.");
       await loadDetails({ showSpinner: false });
     } catch (err) {
@@ -139,6 +161,12 @@ function TicketDetailsPage() {
   };
 
   const handleUpdateComment = async (commentId, commentText) => {
+    const nextCommentError = validateCommentText(commentText, "Edited comment");
+    if (nextCommentError) {
+      toast.error(nextCommentError);
+      return false;
+    }
+
     try {
       setCommentActionId(commentId);
       await ticketService.updateComment(commentId, { commentText });
@@ -175,15 +203,16 @@ function TicketDetailsPage() {
   };
 
   const handleAssignTicket = async () => {
-    if (!assignForm.assignedToUserId) {
-      toast.error(
-        "Please select a staff or admin user before assigning the ticket."
-      );
+    const assignedToUserIdError = validateAssignForm(assignForm.assignedToUserId);
+    if (assignedToUserIdError) {
+      setAssignErrors({ assignedToUserId: assignedToUserIdError });
+      toast.error(assignedToUserIdError);
       return;
     }
 
     try {
       setAssignSubmitting(true);
+      setAssignErrors({ assignedToUserId: "" });
       await ticketService.assignTicket(id, {
         assignedToUserId: Number(assignForm.assignedToUserId),
       });
@@ -198,29 +227,20 @@ function TicketDetailsPage() {
   };
 
   const handleStatusUpdate = async () => {
-    if (!statusForm.status) {
-      toast.error("Please select the next status first.");
-      return;
-    }
-
-    if (
-      statusForm.status === "REJECTED" &&
-      !statusForm.rejectionReason.trim()
-    ) {
-      toast.error("Rejection reason is required for rejected tickets.");
-      return;
-    }
-
-    if (
-      statusForm.status === "RESOLVED" &&
-      !statusForm.resolutionNotes.trim()
-    ) {
-      toast.error("Resolution notes are required for resolved tickets.");
+    const nextStatusErrors = validateStatusForm(statusForm);
+    if (Object.values(nextStatusErrors).some(Boolean)) {
+      setStatusErrors((prev) => ({ ...prev, ...nextStatusErrors }));
+      toast.error("Please fix the status form before updating.");
       return;
     }
 
     try {
       setStatusSubmitting(true);
+      setStatusErrors({
+        status: "",
+        rejectionReason: "",
+        resolutionNotes: "",
+      });
       await ticketService.updateStatus(id, {
         status: statusForm.status,
         rejectionReason:
@@ -253,14 +273,20 @@ function TicketDetailsPage() {
 
   const handleFileSelection = (event) => {
     const files = Array.from(event.target.files || []);
+    const nextAttachmentError = validateAttachmentFiles(
+      files,
+      remainingAttachmentSlots
+    );
 
-    if (files.length > remainingAttachmentSlots) {
-      toast.error(
-        `You can upload up to ${remainingAttachmentSlots} more attachment(s).`
-      );
+    if (nextAttachmentError) {
+      setAttachmentError(nextAttachmentError);
+      setSelectedFiles([]);
+      event.target.value = "";
+      toast.error(nextAttachmentError);
       return;
     }
 
+    setAttachmentError("");
     setSelectedFiles(files);
   };
 
@@ -269,6 +295,7 @@ function TicketDetailsPage() {
 
     try {
       setUploadSubmitting(true);
+      setAttachmentError("");
 
       for (const file of selectedFiles) {
         await ticketService.uploadAttachment(id, file);
@@ -462,7 +489,11 @@ function TicketDetailsPage() {
             <TicketCommentSection
               comments={comments}
               newComment={newComment}
-              setNewComment={setNewComment}
+              setNewComment={(value) => {
+                setNewComment(value);
+                setCommentError("");
+              }}
+              newCommentError={commentError}
               onAddComment={handleAddComment}
               submitting={commentSubmitting}
               onUpdateComment={handleUpdateComment}
@@ -486,10 +517,15 @@ function TicketDetailsPage() {
                     </label>
                     <select
                       value={assignForm.assignedToUserId}
-                      onChange={(e) =>
-                        setAssignForm({ assignedToUserId: e.target.value })
-                      }
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                      onChange={(e) => {
+                        setAssignForm({ assignedToUserId: e.target.value });
+                        setAssignErrors({ assignedToUserId: "" });
+                      }}
+                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                        assignErrors.assignedToUserId
+                          ? "border-red-300 bg-red-50"
+                          : "border-slate-200"
+                      }`}
                     >
                       <option value="">
                         {assignableUsers.length
@@ -506,6 +542,11 @@ function TicketDetailsPage() {
                         </option>
                       ))}
                     </select>
+                    {assignErrors.assignedToUserId ? (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        {assignErrors.assignedToUserId}
+                      </p>
+                    ) : null}
                     <p className="mt-2 text-xs text-slate-500">
                       Only staff or admin users can be assigned to tickets.
                     </p>
@@ -530,7 +571,7 @@ function TicketDetailsPage() {
                 </h2>
 
                 <p className="mb-3 text-sm text-slate-500">
-                  {attachments.length} / {MAX_ATTACHMENTS} attachment(s) used
+                  {attachments.length} / {MAX_TICKET_ATTACHMENTS} attachment(s) used
                 </p>
 
                 <div className="space-y-4">
@@ -541,8 +582,17 @@ function TicketDetailsPage() {
                     accept="image/png,image/jpeg,image/jpg,image/webp"
                     onChange={handleFileSelection}
                     disabled={remainingAttachmentSlots === 0}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                    className={`w-full rounded-2xl border px-4 py-3 ${
+                      attachmentError
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
+                    }`}
                   />
+                  {attachmentError ? (
+                    <p className="text-xs font-medium text-red-600">
+                      {attachmentError}
+                    </p>
+                  ) : null}
 
                   {selectedFiles.length ? (
                     <p className="text-sm text-slate-500">
@@ -586,13 +636,27 @@ function TicketDetailsPage() {
                     </label>
                     <select
                       value={statusForm.status}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const nextStatus = e.target.value;
                         setStatusForm((prev) => ({
                           ...prev,
-                          status: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                          status: nextStatus,
+                          rejectionReason:
+                            nextStatus === "REJECTED" ? prev.rejectionReason : "",
+                          resolutionNotes:
+                            nextStatus === "RESOLVED" ? prev.resolutionNotes : "",
+                        }));
+                        setStatusErrors({
+                          status: "",
+                          rejectionReason: "",
+                          resolutionNotes: "",
+                        });
+                      }}
+                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                        statusErrors.status
+                          ? "border-red-300 bg-red-50"
+                          : "border-slate-200"
+                      }`}
                       disabled={!transitionOptions.length}
                     >
                       <option value="">
@@ -606,6 +670,11 @@ function TicketDetailsPage() {
                         </option>
                       ))}
                     </select>
+                    {statusErrors.status ? (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        {statusErrors.status}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -615,15 +684,28 @@ function TicketDetailsPage() {
                     <textarea
                       rows={4}
                       value={statusForm.resolutionNotes}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setStatusForm((prev) => ({
                           ...prev,
                           resolutionNotes: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                        }));
+                        setStatusErrors((prev) => ({
+                          ...prev,
+                          resolutionNotes: "",
+                        }));
+                      }}
+                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                        statusErrors.resolutionNotes
+                          ? "border-red-300 bg-red-50"
+                          : "border-slate-200"
+                      }`}
                       placeholder="Required when moving to RESOLVED"
                     />
+                    {statusErrors.resolutionNotes ? (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        {statusErrors.resolutionNotes}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -633,16 +715,29 @@ function TicketDetailsPage() {
                     <textarea
                       rows={4}
                       value={statusForm.rejectionReason}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setStatusForm((prev) => ({
                           ...prev,
                           rejectionReason: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                        }));
+                        setStatusErrors((prev) => ({
+                          ...prev,
+                          rejectionReason: "",
+                        }));
+                      }}
+                      className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                        statusErrors.rejectionReason
+                          ? "border-red-300 bg-red-50"
+                          : "border-slate-200"
+                      }`}
                       placeholder="Required when moving to REJECTED"
                       disabled={statusForm.status !== "REJECTED"}
                     />
+                    {statusErrors.rejectionReason ? (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        {statusErrors.rejectionReason}
+                      </p>
+                    ) : null}
                   </div>
 
                   <button

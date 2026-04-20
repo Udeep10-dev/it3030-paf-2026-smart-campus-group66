@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { validateCommentText } from "../../utils/ticketFormValidation";
 
 function TicketCommentSection({
   comments = [],
   newComment,
   setNewComment,
+  newCommentError = "",
   onAddComment,
   submitting,
   onUpdateComment,
@@ -13,20 +15,29 @@ function TicketCommentSection({
 }) {
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  const [editingError, setEditingError] = useState("");
 
   const startEditing = (comment) => {
     setEditingId(comment.id);
     setEditingText(comment.commentText);
+    setEditingError("");
   };
 
   const handleSaveEdit = async () => {
-    if (!editingId || !editingText.trim()) return;
+    if (!editingId) return;
+
+    const nextEditingError = validateCommentText(editingText, "Edited comment");
+    if (nextEditingError) {
+      setEditingError(nextEditingError);
+      return;
+    }
 
     const updated = await onUpdateComment(editingId, editingText.trim());
 
     if (updated) {
       setEditingId(null);
       setEditingText("");
+      setEditingError("");
     }
   };
 
@@ -40,8 +51,17 @@ function TicketCommentSection({
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Write a comment..."
-          className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+          className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+            newCommentError
+              ? "border-red-300 bg-red-50"
+              : "border-slate-200"
+          }`}
         />
+        {newCommentError ? (
+          <p className="mt-2 text-xs font-medium text-red-600">
+            {newCommentError}
+          </p>
+        ) : null}
         <div className="mt-3 flex justify-end">
           <button
             type="button"
@@ -100,9 +120,21 @@ function TicketCommentSection({
                   <textarea
                     rows={3}
                     value={editingText}
-                    onChange={(e) => setEditingText(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+                    onChange={(e) => {
+                      setEditingText(e.target.value);
+                      setEditingError("");
+                    }}
+                    className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                      editingError
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
+                    }`}
                   />
+                  {editingError ? (
+                    <p className="text-xs font-medium text-red-600">
+                      {editingError}
+                    </p>
+                  ) : null}
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -118,6 +150,7 @@ function TicketCommentSection({
                       onClick={() => {
                         setEditingId(null);
                         setEditingText("");
+                        setEditingError("");
                       }}
                     >
                       Cancel

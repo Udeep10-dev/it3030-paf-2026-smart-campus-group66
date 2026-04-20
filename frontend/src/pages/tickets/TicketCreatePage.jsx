@@ -3,6 +3,11 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import resourceService from "../../services/resourceService";
 import ticketService from "../../services/ticketService";
+import {
+  MAX_TICKET_ATTACHMENTS,
+  validateAttachmentFiles,
+  validateTicketForm,
+} from "../../utils/ticketFormValidation";
 
 const initialForm = {
   resourceId: "",
@@ -20,6 +25,7 @@ function TicketCreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [resources, setResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(true);
+  const [errors, setErrors] = useState({});
 
   const selectedResource = useMemo(
     () => resources.find((resource) => String(resource.id) === form.resourceId),
@@ -57,6 +63,11 @@ function TicketCreatePage() {
         resourceId: value,
         location: resource?.location || prev.location,
       }));
+      setErrors((prev) => ({
+        ...prev,
+        resourceId: "",
+        location: "",
+      }));
       return;
     }
 
@@ -64,26 +75,54 @@ function TicketCreatePage() {
       ...prev,
       [name]: value,
     }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+      ...(name === "location" ? { location: "" } : {}),
+    }));
   };
 
   const handleFileChange = (e) => {
     const selected = Array.from(e.target.files || []);
-    if (selected.length > 3) {
-      toast.error("You can upload a maximum of 3 attachments.");
+    const attachmentError = validateAttachmentFiles(
+      selected,
+      MAX_TICKET_ATTACHMENTS
+    );
+
+    if (attachmentError) {
+      setErrors((prev) => ({ ...prev, attachments: attachmentError }));
+      setFiles([]);
+      e.target.value = "";
+      toast.error(attachmentError);
       return;
     }
 
+    setErrors((prev) => ({ ...prev, attachments: "" }));
     setFiles(selected);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.resourceId && !form.location.trim()) {
-      toast.error("Please provide either a resource or a location.");
+    const validationErrors = {
+      ...validateTicketForm(form),
+    };
+    const attachmentError = validateAttachmentFiles(
+      files,
+      MAX_TICKET_ATTACHMENTS
+    );
+
+    if (attachmentError) {
+      validationErrors.attachments = attachmentError;
+    }
+
+    if (Object.values(validationErrors).some(Boolean)) {
+      setErrors(validationErrors);
+      toast.error("Please fix the highlighted fields before submitting.");
       return;
     }
 
+    setErrors({});
     setSubmitting(true);
 
     try {
@@ -141,6 +180,7 @@ function TicketCreatePage() {
 
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8"
         >
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -152,7 +192,9 @@ function TicketCreatePage() {
                 name="resourceId"
                 value={form.resourceId}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                  errors.location ? "border-red-300 bg-red-50" : "border-slate-200"
+                }`}
               >
                 <option value="">
                   {loadingResources
@@ -180,8 +222,15 @@ function TicketCreatePage() {
                 value={form.location}
                 onChange={handleChange}
                 placeholder="Ex: Lab 03, Floor 2"
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                  errors.location ? "border-red-300 bg-red-50" : "border-slate-200"
+                }`}
               />
+              {errors.location ? (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.location}
+                </p>
+              ) : null}
               {selectedResource ? (
                 <p className="mt-2 text-xs text-slate-500">
                   Selected resource location: {selectedResource.location || "Not specified"}
@@ -201,8 +250,9 @@ function TicketCreatePage() {
                 name="category"
                 value={form.category}
                 onChange={handleChange}
-                required
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                  errors.category ? "border-red-300 bg-red-50" : "border-slate-200"
+                }`}
               >
                 <option value="">Select category</option>
                 <option value="ELECTRICAL">ELECTRICAL</option>
@@ -212,6 +262,11 @@ function TicketCreatePage() {
                 <option value="CLEANING">CLEANING</option>
                 <option value="OTHER">OTHER</option>
               </select>
+              {errors.category ? (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.category}
+                </p>
+              ) : null}
             </div>
 
             <div>
@@ -222,8 +277,9 @@ function TicketCreatePage() {
                 name="priority"
                 value={form.priority}
                 onChange={handleChange}
-                required
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                  errors.priority ? "border-red-300 bg-red-50" : "border-slate-200"
+                }`}
               >
                 <option value="">Select priority</option>
                 <option value="LOW">LOW</option>
@@ -231,6 +287,11 @@ function TicketCreatePage() {
                 <option value="HIGH">HIGH</option>
                 <option value="URGENT">URGENT</option>
               </select>
+              {errors.priority ? (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.priority}
+                </p>
+              ) : null}
             </div>
 
             <div className="md:col-span-2">
@@ -243,8 +304,17 @@ function TicketCreatePage() {
                 value={form.preferredContact}
                 onChange={handleChange}
                 placeholder="Phone number or email"
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                  errors.preferredContact
+                    ? "border-red-300 bg-red-50"
+                    : "border-slate-200"
+                }`}
               />
+              {errors.preferredContact ? (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.preferredContact}
+                </p>
+              ) : null}
               <p className="mt-2 text-xs text-slate-500">
                 Use phone or email so the maintenance team can reach you.
               </p>
@@ -259,10 +329,25 @@ function TicketCreatePage() {
                 rows={5}
                 value={form.description}
                 onChange={handleChange}
-                required
                 placeholder="Describe the issue clearly..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2F80ED] ${
+                  errors.description
+                    ? "border-red-300 bg-red-50"
+                    : "border-slate-200"
+                }`}
               />
+              <div className="mt-2 flex items-center justify-between gap-3">
+                {errors.description ? (
+                  <p className="text-xs font-medium text-red-600">
+                    {errors.description}
+                  </p>
+                ) : (
+                  <span />
+                )}
+                <p className="text-xs text-slate-400">
+                  {form.description.trim().length}/1000
+                </p>
+              </div>
             </div>
 
             <div className="md:col-span-2">
@@ -274,8 +359,17 @@ function TicketCreatePage() {
                 multiple
                 accept="image/*"
                 onChange={handleFileChange}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                className={`w-full rounded-2xl border px-4 py-3 ${
+                  errors.attachments
+                    ? "border-red-300 bg-red-50"
+                    : "border-slate-200"
+                }`}
               />
+              {errors.attachments ? (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.attachments}
+                </p>
+              ) : null}
               {files.length > 0 ? (
                 <p className="mt-2 text-sm text-slate-500">
                   {files.length} file(s) selected
