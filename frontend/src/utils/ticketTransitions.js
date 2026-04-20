@@ -6,6 +6,12 @@ export const TICKET_STATUS_TRANSITIONS = {
   REJECTED: [],
 };
 
-export function getNextTicketStatuses(status) {
-  return TICKET_STATUS_TRANSITIONS[status] || [];
+export function getNextTicketStatuses(status, role = "") {
+  const transitions = TICKET_STATUS_TRANSITIONS[status] || [];
+
+  if ((role || "").toUpperCase() === "ADMIN") {
+    return transitions;
+  }
+
+  return transitions.filter((nextStatus) => nextStatus !== "REJECTED");
 }

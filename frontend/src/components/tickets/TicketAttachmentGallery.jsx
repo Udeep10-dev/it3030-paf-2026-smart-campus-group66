@@ -20,58 +20,69 @@ function TicketAttachmentGallery({
       <h3 className="mb-4 text-xl font-bold text-[#123A7A]">Attachments</h3>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {attachments.map((file) => (
-          <div
-            key={file.id}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-[#F5F8FC] transition hover:shadow-md"
-          >
-            <div className="flex h-40 items-center justify-center bg-slate-100">
-              {file.fileType?.startsWith("image/") ? (
-                <img
-                  src={resolveBackendAssetUrl(file.fileUrl)}
-                  alt={file.fileName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-sm font-medium text-slate-500">
-                  File Preview
-                </span>
-              )}
-            </div>
+        {attachments.map((file) => {
+          const fileUrl = resolveBackendAssetUrl(file.fileUrl);
+          const isImage = file.fileType?.startsWith("image/");
 
-            <div className="p-4">
-              <p className="truncate font-semibold text-[#123A7A]">
-                {file.fileName}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">{file.fileType}</p>
-              <p className="mt-1 text-xs text-slate-400">
-                {Math.round((file.fileSize || 0) / 1024)} KB
-              </p>
+          return (
+            <div
+              key={file.id}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-[#F5F8FC] transition hover:shadow-md"
+            >
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="block h-48 bg-slate-100"
+                title={`Open ${file.fileName}`}
+              >
+                {isImage ? (
+                  <img
+                    src={fileUrl}
+                    alt={file.fileName}
+                    className="h-full w-full object-cover transition hover:scale-[1.02]"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm font-medium text-slate-500">
+                    Open file
+                  </div>
+                )}
+              </a>
 
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <a
-                  href={resolveBackendAssetUrl(file.fileUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-semibold text-[#2F80ED]"
-                >
-                  Open file
-                </a>
+              <div className="p-4">
+                <p className="truncate font-semibold text-[#123A7A]">
+                  {file.fileName}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{file.fileType}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {Math.round((file.fileSize || 0) / 1024)} KB
+                </p>
 
-                {file.uploadedByUserId === currentUserId && onDeleteAttachment ? (
-                  <button
-                    type="button"
-                    onClick={() => onDeleteAttachment(file.id)}
-                    disabled={deletingAttachmentId === file.id}
-                    className="text-sm font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-[#2F80ED]"
                   >
-                    {deletingAttachmentId === file.id ? "Deleting..." : "Delete"}
-                  </button>
-                ) : null}
+                    Open file
+                  </a>
+
+                  {file.uploadedByUserId === currentUserId && onDeleteAttachment ? (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteAttachment(file.id)}
+                      disabled={deletingAttachmentId === file.id}
+                      className="text-sm font-semibold text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deletingAttachmentId === file.id ? "Deleting..." : "Delete"}
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

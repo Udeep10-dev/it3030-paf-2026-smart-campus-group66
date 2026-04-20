@@ -32,15 +32,17 @@ public class SecurityConfig {
                 .authenticationEntryPoint((request, response, authException) ->
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                 )
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**", "/login").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/notifications/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/users/assignable").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.PUT,  "/api/tickets/**").hasAnyRole("STAFF","ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/tickets/**").hasAnyRole("STAFF","ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.DELETE,"/api/tickets/**").hasAnyRole("STAFF","ADMIN")
                 .requestMatchers("/api/tickets/**").authenticated()
                 .requestMatchers("/api/comments/**").authenticated()
                 .requestMatchers("/api/notifications/**").authenticated()

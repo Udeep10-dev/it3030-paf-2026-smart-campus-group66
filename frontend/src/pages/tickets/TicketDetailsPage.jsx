@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ticketService from "../../services/ticketService";
+import userService from "../../services/userService";
 import TicketStatusBadge from "../../components/tickets/TicketStatusBadge";
 import TicketPriorityBadge from "../../components/tickets/TicketPriorityBadge";
 import TicketAttachmentGallery from "../../components/tickets/TicketAttachmentGallery";
@@ -44,6 +45,7 @@ function TicketDetailsPage() {
   const [uploadInputKey, setUploadInputKey] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [assignableUsers, setAssignableUsers] = useState([]);
 
   const loadDetails = async ({ showSpinner = true } = {}) => {
     if (showSpinner) {
@@ -87,7 +89,25 @@ function TicketDetailsPage() {
     loadDetails();
   }, [id]);
 
-  const transitionOptions = getNextTicketStatuses(ticket?.status);
+  useEffect(() => {
+    if (!canAssignTicket) {
+      setAssignableUsers([]);
+      return;
+    }
+
+    const loadAssignableUsers = async () => {
+      try {
+        const res = await userService.getAssignableUsers();
+        setAssignableUsers(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadAssignableUsers();
+  }, [canAssignTicket]);
+
+  const transitionOptions = getNextTicketStatuses(ticket?.status, currentUserRole);
   const remainingAttachmentSlots = Math.max(
     MAX_ATTACHMENTS - attachments.length,
     0
@@ -166,7 +186,7 @@ function TicketDetailsPage() {
     if (!assignForm.assignedToUserId) {
       setMessage({
         type: "error",
-        text: "Please enter a user ID before assigning the ticket.",
+        text: "Please select a staff or admin user before assigning the ticket.",
       });
       return;
     }
@@ -503,24 +523,39 @@ function TicketDetailsPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                      Assigned User ID
+                      Assign To
                     </label>
-                    <input
-                      type="number"
-                      min="1"
+                    <select
                       value={assignForm.assignedToUserId}
                       onChange={(e) =>
                         setAssignForm({ assignedToUserId: e.target.value })
                       }
-                      placeholder="Enter technician user ID"
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                    />
+                    >
+                      <option value="">
+                        {assignableUsers.length
+                          ? "Select staff/admin user"
+                          : "No assignable users found"}
+                      </option>
+                      {assignableUsers.map((assignableUser) => (
+                        <option
+                          key={assignableUser.id}
+                          value={assignableUser.id}
+                        >
+                          {assignableUser.name} ({assignableUser.role}) - #
+                          {assignableUser.id}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-2 text-xs text-slate-500">
+                      Only staff or admin users can be assigned to tickets.
+                    </p>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAssignTicket}
-                    disabled={assignSubmitting}
+                    disabled={assignSubmitting || !assignableUsers.length}
                     className="w-full rounded-full bg-[#123A7A] px-6 py-3 font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {assignSubmitting ? "Assigning..." : "Assign Ticket"}
@@ -647,6 +682,7 @@ function TicketDetailsPage() {
                       }
                       className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
                       placeholder="Required when moving to REJECTED"
+                      disabled={statusForm.status !== "REJECTED"}
                     />
                   </div>
 
