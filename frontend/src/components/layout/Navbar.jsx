@@ -1,17 +1,21 @@
-
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FaBars, FaHome, FaTimes } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const currentRole = user?.role?.toUpperCase?.() || "";
+  const isAdmin = currentRole === "ADMIN";
 
   const navItems = [
     { label: "Home", to: "/" },
     { label: "Resources", to: "/resources" },
-    { label: "Bookings", to: "/booking/new" },
+    { label: "Bookings", to: "/bookings/new" },
     { label: "Tickets", to: "/tickets" },
     { label: "Notifications", to: "/notifications" },
+    ...(isAdmin ? [{ label: "Admin Panel", to: "/admin/notifications" }] : []),
   ];
 
   const navLinkClass = ({ isActive }) =>
@@ -47,12 +51,41 @@ function Navbar() {
           </Link>
 
           <div className="hidden items-center gap-3 md:flex">
-            <Link
-              to="/login"
-              className="rounded-full border border-[#2F80ED] px-5 py-2 text-sm font-semibold text-[#123A7A] transition hover:bg-[#EAF4FF]"
-            >
-              Log In
-            </Link>
+            {user ? (
+              <>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-[#123A7A]">
+                    {user.name || user.email}
+                  </p>
+                  <p className="text-xs text-slate-500">{user.email}</p>
+                </div>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                    isAdmin
+                      ? "bg-amber-100 text-amber-700"
+                      : currentRole === "STAFF"
+                      ? "bg-sky-100 text-sky-700"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {currentRole || "USER"}
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="rounded-full border border-[#2F80ED] px-5 py-2 text-sm font-semibold text-[#123A7A] transition hover:bg-[#EAF4FF]"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="rounded-full border border-[#2F80ED] px-5 py-2 text-sm font-semibold text-[#123A7A] transition hover:bg-[#EAF4FF]"
+              >
+                Log In
+              </Link>
+            )}
           </div>
 
           <button
@@ -91,21 +124,40 @@ function Navbar() {
               </NavLink>
             ))}
 
-            <Link
-              to="/login"
-              onClick={() => setMobileOpen(false)}
-              className="mt-3 block rounded-xl bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-4 py-3 text-center text-sm font-semibold text-white shadow-md"
-            >
-              Log In
-            </Link>
+            {user ? (
+              <>
+                <div className="rounded-xl bg-[#3E4C59] px-4 py-3 text-sm text-slate-200">
+                  <p className="font-semibold text-white">{user.name || user.email}</p>
+                  <p className="mt-1 text-xs">{user.email}</p>
+                  <p className="mt-2 text-xs uppercase tracking-wider text-[#4FD1C5]">
+                    {currentRole || "USER"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    logout();
+                  }}
+                  className="mt-3 block w-full rounded-xl bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-4 py-3 text-center text-sm font-semibold text-white shadow-md"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="mt-3 block rounded-xl bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-4 py-3 text-center text-sm font-semibold text-white shadow-md"
+              >
+                Log In
+              </Link>
+            )}
           </div>
         </div>
       )}
     </>
   );
 }
-
-
-
 
 export default Navbar;

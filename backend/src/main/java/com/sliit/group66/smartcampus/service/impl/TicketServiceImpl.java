@@ -7,13 +7,17 @@ import com.sliit.group66.smartcampus.dto.ticket.UpdateTicketStatusRequest;
 import com.sliit.group66.smartcampus.entity.Resource;
 import com.sliit.group66.smartcampus.entity.Ticket;
 import com.sliit.group66.smartcampus.entity.User;
+import com.sliit.group66.smartcampus.enums.NotificationType;
 import com.sliit.group66.smartcampus.enums.TicketPriority;
 import com.sliit.group66.smartcampus.enums.TicketStatus;
+import com.sliit.group66.smartcampus.enums.UserRole;
 import com.sliit.group66.smartcampus.exception.BadRequestException;
+import com.sliit.group66.smartcampus.exception.ForbiddenOperationException;
 import com.sliit.group66.smartcampus.exception.ResourceNotFoundException;
 import com.sliit.group66.smartcampus.repository.ResourceRepository;
 import com.sliit.group66.smartcampus.repository.TicketRepository;
 import com.sliit.group66.smartcampus.repository.UserRepository;
+import com.sliit.group66.smartcampus.service.NotificationService;
 import com.sliit.group66.smartcampus.service.TicketService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +32,16 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final ResourceRepository resourceRepository;
+    private final NotificationService notificationService;
 
     public TicketServiceImpl(TicketRepository ticketRepository,
                              UserRepository userRepository,
-                             ResourceRepository resourceRepository) {
+                             ResourceRepository resourceRepository,
+                             NotificationService notificationService) {
         this.ticketRepository = ticketRepository;
         this.userRepository = userRepository;
         this.resourceRepository = resourceRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -68,9 +75,8 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
-    public TicketResponse getTicketById(Long ticketId) {
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+    public TicketResponse getTicketById(Long ticketId, Long currentUserId, UserRole currentUserRole) {
+        Ticket ticket = getAccessibleTicket(ticketId, currentUserId, currentUserRole);
         return mapToResponse(ticket);
     }
 
@@ -85,7 +91,9 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TicketResponse> getAllTickets(TicketStatus status, TicketPriority priority) {
+    public List<TicketResponse> getAllTickets(TicketStatus status, TicketPriority priority, Long currentUserId, UserRole currentUserRole) {
+        ensureStaffOrAdmin(currentUserRole, "Only staff or admin can view all tickets");
+
         List<Ticket> tickets;
 
         if (status != null && priority != null) {
@@ -102,24 +110,50 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketResponse assignTicket(Long ticketId, AssignTicketRequest request) {
+    public TicketResponse assignTicket(Long ticketId, AssignTicketRequest request, Long currentUserId, UserRole currentUserRole) {
+        ensureStaffOrAdmin(currentUserRole, "Only staff or admin can assign tickets");
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED) {
+            throw new BadRequestException("Closed or rejected tickets cannot be assigned");
+        }
 
         User assignedUser = userRepository.findById(request.getAssignedToUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found"));
 
+        if (assignedUser.getRole() != UserRole.STAFF && assignedUser.getRole() != UserRole.ADMIN) {
+            throw new BadRequestException("Tickets can only be assigned to staff or admin users");
+        }
+
         ticket.setAssignedTo(assignedUser);
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+
+        notifySafely(
+                assignedUser.getId(),
+                "You have been assigned ticket " + updatedTicket.getTicketNumber() + ".",
+                NotificationType.TICKET_ASSIGNED
+        );
+
+        if (updatedTicket.getReportedBy() != null && !updatedTicket.getReportedBy().getId().equals(currentUserId)) {
+            notifySafely(
+                    updatedTicket.getReportedBy().getId(),
+                    "Your ticket " + updatedTicket.getTicketNumber() + " has been assigned.",
+                    NotificationType.TICKET_UPDATED
+            );
+        }
+
         return mapToResponse(updatedTicket);
     }
 
     @Override
-    public TicketResponse updateTicketStatus(Long ticketId, UpdateTicketStatusRequest request) {
+    public TicketResponse updateTicketStatus(Long ticketId, UpdateTicketStatusRequest request, Long currentUserId, UserRole currentUserRole) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
+        ensureCanUpdateStatus(ticket, currentUserId, currentUserRole, request.getStatus());
         validateStatusTransition(ticket.getStatus(), request.getStatus());
 
         if (request.getStatus() == TicketStatus.REJECTED &&
@@ -145,7 +179,62 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Ticket updatedTicket = ticketRepository.save(ticket);
+
+        if (updatedTicket.getReportedBy() != null) {
+            notifySafely(
+                    updatedTicket.getReportedBy().getId(),
+                    "Your ticket " + updatedTicket.getTicketNumber() + " is now " + updatedTicket.getStatus() + ".",
+                    NotificationType.TICKET_UPDATED
+            );
+        }
+
         return mapToResponse(updatedTicket);
+    }
+
+    private Ticket getAccessibleTicket(Long ticketId, Long currentUserId, UserRole currentUserRole) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (currentUserRole == UserRole.ADMIN || currentUserRole == UserRole.STAFF) {
+            return ticket;
+        }
+
+        if (ticket.getReportedBy() != null && ticket.getReportedBy().getId().equals(currentUserId)) {
+            return ticket;
+        }
+
+        throw new ForbiddenOperationException("You can only access your own tickets");
+    }
+
+    private void ensureStaffOrAdmin(UserRole currentUserRole, String message) {
+        if (currentUserRole != UserRole.STAFF && currentUserRole != UserRole.ADMIN) {
+            throw new ForbiddenOperationException(message);
+        }
+    }
+
+    private void ensureCanUpdateStatus(Ticket ticket, Long currentUserId, UserRole currentUserRole, TicketStatus nextStatus) {
+        if (currentUserRole == UserRole.ADMIN) {
+            return;
+        }
+
+        if (nextStatus == TicketStatus.REJECTED) {
+            throw new ForbiddenOperationException("Only admin can reject tickets");
+        }
+
+        if (currentUserRole != UserRole.STAFF) {
+            throw new ForbiddenOperationException("Only staff or admin can update ticket status");
+        }
+
+        if (ticket.getAssignedTo() == null || !ticket.getAssignedTo().getId().equals(currentUserId)) {
+            throw new ForbiddenOperationException("Only the assigned staff member can update this ticket");
+        }
+    }
+
+    private void notifySafely(Long userId, String message, NotificationType type) {
+        try {
+            notificationService.createNotification(userId, message, type);
+        } catch (Exception ignored) {
+        }
     }
 
     private void validateStatusTransition(TicketStatus current, TicketStatus next) {

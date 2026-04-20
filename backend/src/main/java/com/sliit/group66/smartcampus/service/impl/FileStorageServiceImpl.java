@@ -4,6 +4,7 @@ import com.sliit.group66.smartcampus.dto.ticket.AttachmentResponse;
 import com.sliit.group66.smartcampus.entity.Ticket;
 import com.sliit.group66.smartcampus.entity.TicketAttachment;
 import com.sliit.group66.smartcampus.entity.User;
+import com.sliit.group66.smartcampus.enums.UserRole;
 import com.sliit.group66.smartcampus.exception.BadRequestException;
 import com.sliit.group66.smartcampus.exception.ForbiddenOperationException;
 import com.sliit.group66.smartcampus.exception.ResourceNotFoundException;
@@ -39,9 +40,8 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public AttachmentResponse uploadTicketAttachment(Long ticketId, MultipartFile file, Long currentUserId) {
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+    public AttachmentResponse uploadTicketAttachment(Long ticketId, MultipartFile file, Long currentUserId, UserRole currentUserRole) {
+        Ticket ticket = getAccessibleTicket(ticketId, currentUserId, currentUserRole);
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -91,7 +91,9 @@ public class FileStorageServiceImpl implements FileStorageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AttachmentResponse> getAttachmentsByTicket(Long ticketId) {
+    public List<AttachmentResponse> getAttachmentsByTicket(Long ticketId, Long currentUserId, UserRole currentUserRole) {
+        getAccessibleTicket(ticketId, currentUserId, currentUserRole);
+
         return ticketAttachmentRepository.findByTicketId(ticketId)
                 .stream()
                 .map(this::mapToResponse)
@@ -99,12 +101,15 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public void deleteAttachment(Long attachmentId, Long currentUserId) {
+    public void deleteAttachment(Long attachmentId, Long currentUserId, UserRole currentUserRole) {
         TicketAttachment attachment = ticketAttachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));
 
-        if (!attachment.getUploadedBy().getId().equals(currentUserId)) {
-            throw new ForbiddenOperationException("You can only delete your own attachment");
+        boolean isOwner = attachment.getUploadedBy().getId().equals(currentUserId);
+        boolean isAdmin = currentUserRole == UserRole.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new ForbiddenOperationException("You can only delete your own attachment unless you are an admin");
         }
 
         String fileUrl = attachment.getFileUrl();
@@ -116,6 +121,21 @@ public class FileStorageServiceImpl implements FileStorageService {
         }
 
         ticketAttachmentRepository.delete(attachment);
+    }
+
+    private Ticket getAccessibleTicket(Long ticketId, Long currentUserId, UserRole currentUserRole) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+        if (currentUserRole == UserRole.ADMIN || currentUserRole == UserRole.STAFF) {
+            return ticket;
+        }
+
+        if (ticket.getReportedBy() != null && ticket.getReportedBy().getId().equals(currentUserId)) {
+            return ticket;
+        }
+
+        throw new ForbiddenOperationException("You can only access attachments on your own tickets");
     }
 
     private AttachmentResponse mapToResponse(TicketAttachment attachment) {
