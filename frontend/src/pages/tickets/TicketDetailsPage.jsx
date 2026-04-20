@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import ticketService from "../../services/ticketService";
 import TicketStatusBadge from "../../components/tickets/TicketStatusBadge";
 import TicketPriorityBadge from "../../components/tickets/TicketPriorityBadge";
@@ -7,12 +8,18 @@ import TicketAttachmentGallery from "../../components/tickets/TicketAttachmentGa
 import TicketCommentSection from "../../components/tickets/TicketCommentSection";
 import { getNextTicketStatuses } from "../../utils/ticketTransitions";
 
-const CURRENT_USER_ID = 1;
 const MAX_ATTACHMENTS = 3;
 
 function TicketDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const currentUserId = user?.id ?? null;
+  const currentUserRole = user?.role?.toUpperCase?.() || "";
+  const isStaff = currentUserRole === "STAFF";
+  const isAdmin = currentUserRole === "ADMIN";
+  const canAssignTicket = isStaff || isAdmin;
 
   const [ticket, setTicket] = useState(null);
   const [attachments, setAttachments] = useState([]);
@@ -85,6 +92,10 @@ function TicketDetailsPage() {
     MAX_ATTACHMENTS - attachments.length,
     0
   );
+  const canUploadAttachments =
+    isAdmin || isStaff || ticket?.reportedByUserId === currentUserId;
+  const canManageStatus =
+    isAdmin || (isStaff && ticket?.assignedToUserId === currentUserId);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
@@ -464,7 +475,7 @@ function TicketDetailsPage() {
 
             <TicketAttachmentGallery
               attachments={attachments}
-              currentUserId={CURRENT_USER_ID}
+              currentUserId={currentUserId}
               onDeleteAttachment={handleDeleteAttachment}
               deletingAttachmentId={attachmentActionId}
             />
@@ -478,172 +489,178 @@ function TicketDetailsPage() {
               onUpdateComment={handleUpdateComment}
               onDeleteComment={handleDeleteComment}
               actionCommentId={commentActionId}
-              currentUserId={CURRENT_USER_ID}
+              currentUserId={currentUserId}
             />
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
-                Assign Ticket
-              </h2>
+            {canAssignTicket ? (
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
+                  Assign Ticket
+                </h2>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                    Assigned User ID
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={assignForm.assignedToUserId}
-                    onChange={(e) =>
-                      setAssignForm({ assignedToUserId: e.target.value })
-                    }
-                    placeholder="Enter technician user ID"
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                  />
-                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#123A7A]">
+                      Assigned User ID
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={assignForm.assignedToUserId}
+                      onChange={(e) =>
+                        setAssignForm({ assignedToUserId: e.target.value })
+                      }
+                      placeholder="Enter technician user ID"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                    />
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={handleAssignTicket}
-                  disabled={assignSubmitting}
-                  className="w-full rounded-full bg-[#123A7A] px-6 py-3 font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {assignSubmitting ? "Assigning..." : "Assign Ticket"}
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
-                Upload Attachments
-              </h2>
-
-              <p className="mb-3 text-sm text-slate-500">
-                {attachments.length} / {MAX_ATTACHMENTS} attachment(s) used
-              </p>
-
-              <div className="space-y-4">
-                <input
-                  key={uploadInputKey}
-                  type="file"
-                  multiple
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={handleFileSelection}
-                  disabled={remainingAttachmentSlots === 0}
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3"
-                />
-
-                {selectedFiles.length ? (
-                  <p className="text-sm text-slate-500">
-                    {selectedFiles.length} file(s) selected
-                  </p>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={handleAttachmentUpload}
-                  disabled={
-                    uploadSubmitting ||
-                    remainingAttachmentSlots === 0 ||
-                    !selectedFiles.length
-                  }
-                  className="w-full rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {uploadSubmitting ? "Uploading..." : "Upload Attachment(s)"}
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
-                Update Ticket Status
-              </h2>
-
-              <div className="space-y-4">
-                <div className="rounded-2xl bg-[#F5F8FC] p-4 text-sm text-slate-600">
-                  Current status:{" "}
-                  <span className="font-semibold text-[#123A7A]">
-                    {ticket.status}
-                  </span>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                    Next Status
-                  </label>
-                  <select
-                    value={statusForm.status}
-                    onChange={(e) =>
-                      setStatusForm((prev) => ({
-                        ...prev,
-                        status: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                    disabled={!transitionOptions.length}
+                  <button
+                    type="button"
+                    onClick={handleAssignTicket}
+                    disabled={assignSubmitting}
+                    className="w-full rounded-full bg-[#123A7A] px-6 py-3 font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <option value="">
-                      {transitionOptions.length
-                        ? "Select next status"
-                        : "No further transitions available"}
-                    </option>
-                    {transitionOptions.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
+                    {assignSubmitting ? "Assigning..." : "Assign Ticket"}
+                  </button>
                 </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                    Resolution Notes
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={statusForm.resolutionNotes}
-                    onChange={(e) =>
-                      setStatusForm((prev) => ({
-                        ...prev,
-                        resolutionNotes: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                    placeholder="Required when moving to RESOLVED"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                    Rejection Reason
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={statusForm.rejectionReason}
-                    onChange={(e) =>
-                      setStatusForm((prev) => ({
-                        ...prev,
-                        rejectionReason: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-                    placeholder="Required when moving to REJECTED"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleStatusUpdate}
-                  disabled={statusSubmitting || !transitionOptions.length}
-                  className="w-full rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {statusSubmitting ? "Updating..." : "Update Status"}
-                </button>
               </div>
-            </div>
+            ) : null}
+
+            {canUploadAttachments ? (
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
+                  Upload Attachments
+                </h2>
+
+                <p className="mb-3 text-sm text-slate-500">
+                  {attachments.length} / {MAX_ATTACHMENTS} attachment(s) used
+                </p>
+
+                <div className="space-y-4">
+                  <input
+                    key={uploadInputKey}
+                    type="file"
+                    multiple
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleFileSelection}
+                    disabled={remainingAttachmentSlots === 0}
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-3"
+                  />
+
+                  {selectedFiles.length ? (
+                    <p className="text-sm text-slate-500">
+                      {selectedFiles.length} file(s) selected
+                    </p>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={handleAttachmentUpload}
+                    disabled={
+                      uploadSubmitting ||
+                      remainingAttachmentSlots === 0 ||
+                      !selectedFiles.length
+                    }
+                    className="w-full rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {uploadSubmitting ? "Uploading..." : "Upload Attachment(s)"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {canManageStatus ? (
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+                <h2 className="mb-4 text-xl font-bold text-[#123A7A]">
+                  Update Ticket Status
+                </h2>
+
+                <div className="space-y-4">
+                  <div className="rounded-2xl bg-[#F5F8FC] p-4 text-sm text-slate-600">
+                    Current status:{" "}
+                    <span className="font-semibold text-[#123A7A]">
+                      {ticket.status}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#123A7A]">
+                      Next Status
+                    </label>
+                    <select
+                      value={statusForm.status}
+                      onChange={(e) =>
+                        setStatusForm((prev) => ({
+                          ...prev,
+                          status: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                      disabled={!transitionOptions.length}
+                    >
+                      <option value="">
+                        {transitionOptions.length
+                          ? "Select next status"
+                          : "No further transitions available"}
+                      </option>
+                      {transitionOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#123A7A]">
+                      Resolution Notes
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={statusForm.resolutionNotes}
+                      onChange={(e) =>
+                        setStatusForm((prev) => ({
+                          ...prev,
+                          resolutionNotes: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                      placeholder="Required when moving to RESOLVED"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#123A7A]">
+                      Rejection Reason
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={statusForm.rejectionReason}
+                      onChange={(e) =>
+                        setStatusForm((prev) => ({
+                          ...prev,
+                          rejectionReason: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
+                      placeholder="Required when moving to REJECTED"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleStatusUpdate}
+                    disabled={statusSubmitting || !transitionOptions.length}
+                    className="w-full rounded-full bg-gradient-to-r from-[#4FD1C5] to-[#2F80ED] px-6 py-3 font-semibold text-white shadow-md transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {statusSubmitting ? "Updating..." : "Update Status"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

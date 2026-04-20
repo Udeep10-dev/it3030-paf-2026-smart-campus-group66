@@ -19,7 +19,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String email = oAuth2User.getAttribute("email");
+        String email = normalizeEmail(oAuth2User.getAttribute("email"));
         String name = oAuth2User.getAttribute("name");
         String avatar = oAuth2User.getAttribute("picture");
 
@@ -38,22 +38,31 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private UserRole determineRole(String email) {
-        if (email == null) return UserRole.STUDENT;
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) return UserRole.STUDENT;
 
         // Hardcoded admin accounts (real Google accounts with admin access)
         java.util.Set<String> adminEmails = java.util.Set.of(
             "it23829060@my.sliit.lk",
+            "it23814288@my.sliit.lk",
             "it23823998@my.sliit.lk"
         );
 
-        if (adminEmails.contains(email)) return UserRole.ADMIN;
+        if (adminEmails.contains(normalizedEmail)) return UserRole.ADMIN;
 
         // Domain-based rules
-        if (email.endsWith("@it.sliit.lk"))  return UserRole.STAFF;
-        if (email.endsWith("@my.sliit.lk"))  return UserRole.STAFF;  // other SLIIT = staff
-        if (email.endsWith("@sliit.lk"))     return UserRole.STAFF;
-        if (email.endsWith("@gmail.com"))    return UserRole.STUDENT;
+        if (normalizedEmail.endsWith("@it.sliit.lk"))  return UserRole.STAFF;
+        if (normalizedEmail.endsWith("@my.sliit.lk"))  return UserRole.STAFF;  // other SLIIT = staff
+        if (normalizedEmail.endsWith("@sliit.lk"))     return UserRole.STAFF;
+        if (normalizedEmail.endsWith("@gmail.com"))    return UserRole.STUDENT;
 
         return UserRole.STUDENT;
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase();
     }
 }

@@ -1,19 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import TicketCard from "../../components/tickets/TicketCard";
 import TicketFilters from "../../components/tickets/TicketFilters";
 import ticketService from "../../services/ticketService";
 
 function TicketListPage() {
+  const { user } = useAuth();
+  const canViewAllTickets = ["STAFF", "ADMIN"].includes(
+    user?.role?.toUpperCase?.()
+  );
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("my");
+  const [viewMode, setViewMode] = useState(
+    canViewAllTickets ? "all" : "my"
+  );
   const [filters, setFilters] = useState({
     status: "",
     priority: "",
   });
+
+  useEffect(() => {
+    if (canViewAllTickets && viewMode === "my") {
+      setViewMode("all");
+      return;
+    }
+
+    if (!canViewAllTickets && viewMode === "all") {
+      setViewMode("my");
+    }
+  }, [canViewAllTickets, viewMode]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -98,17 +116,19 @@ function TicketListPage() {
               >
                 My Tickets
               </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("all")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  viewMode === "all"
-                    ? "bg-[#123A7A] text-white"
-                    : "text-slate-600"
-                }`}
-              >
-                All Tickets
-              </button>
+              {canViewAllTickets ? (
+                <button
+                  type="button"
+                  onClick={() => setViewMode("all")}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    viewMode === "all"
+                      ? "bg-[#123A7A] text-white"
+                      : "text-slate-600"
+                  }`}
+                >
+                  All Tickets
+                </button>
+              ) : null}
             </div>
 
             <Link

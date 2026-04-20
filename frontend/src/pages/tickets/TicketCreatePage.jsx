@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import resourceService from "../../services/resourceService";
 import ticketService from "../../services/ticketService";
 
 const initialForm = {
@@ -17,11 +18,53 @@ function TicketCreatePage() {
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [resources, setResources] = useState([]);
+  const [loadingResources, setLoadingResources] = useState(true);
+
+  const selectedResource = useMemo(
+    () => resources.find((resource) => String(resource.id) === form.resourceId),
+    [resources, form.resourceId]
+  );
+
+  useEffect(() => {
+    const loadResources = async () => {
+      setLoadingResources(true);
+
+      try {
+        const res = await resourceService.getAll();
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        setResources(rows);
+      } catch {
+        setMessage({
+          type: "error",
+          text: "Resources could not be loaded. You can still submit a location-based ticket.",
+        });
+      } finally {
+        setLoadingResources(false);
+      }
+    };
+
+    loadResources();
+  }, []);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "resourceId") {
+      const resource = resources.find((item) => String(item.id) === value);
+
+      setForm((prev) => ({
+        ...prev,
+        resourceId: value,
+        location: resource?.location || prev.location,
+      }));
+      setMessage({ type: "", text: "" });
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -55,12 +98,15 @@ function TicketCreatePage() {
 
     try {
       const payload = {
-        resourceId: form.resourceId ? Number(form.resourceId) : null,
-        location: form.location || null,
+        resourceId:
+          form.resourceId && Number(form.resourceId) > 0
+            ? Number(form.resourceId)
+            : null,
+        location: form.location.trim() || null,
         category: form.category,
-        description: form.description,
+        description: form.description.trim(),
         priority: form.priority,
-        preferredContact: form.preferredContact || null,
+        preferredContact: form.preferredContact.trim() || null,
       };
 
       const res = await ticketService.create(payload);
@@ -127,16 +173,28 @@ function TicketCreatePage() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#123A7A]">
-                Resource ID
+                Resource
               </label>
-              <input
-                type="number"
+              <select
                 name="resourceId"
                 value={form.resourceId}
                 onChange={handleChange}
-                placeholder="Enter resource ID"
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
-              />
+              >
+                <option value="">
+                  {loadingResources
+                    ? "Loading resources..."
+                    : "No specific resource selected"}
+                </option>
+                {resources.map((resource) => (
+                  <option key={resource.id} value={resource.id}>
+                    {resource.name} ({resource.resourceCode || `ID ${resource.id}`})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
+                Choose a real resource if the issue is tied to one. Otherwise, leave this empty and use the location field.
+              </p>
             </div>
 
             <div>
@@ -151,6 +209,15 @@ function TicketCreatePage() {
                 placeholder="Ex: Lab 03, Floor 2"
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2F80ED]"
               />
+              {selectedResource ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  Selected resource location: {selectedResource.location || "Not specified"}
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-slate-500">
+                  Use a location like `Lab 03`, `A-301`, or `Library Level 2`.
+                </p>
+              )}
             </div>
 
             <div>
@@ -243,6 +310,20 @@ function TicketCreatePage() {
               ) : null}
             </div>
           </div>
+
+          {selectedResource ? (
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <p className="font-semibold text-[#123A7A]">
+                Selected Resource Details
+              </p>
+              <p className="mt-1">
+                {selectedResource.name} ({selectedResource.resourceCode || `ID ${selectedResource.id}`})
+              </p>
+              <p>Type: {selectedResource.type || "N/A"}</p>
+              <p>Status: {selectedResource.status || "N/A"}</p>
+              <p>Location: {selectedResource.location || "N/A"}</p>
+            </div>
+          ) : null}
 
           <div className="mt-6 flex flex-wrap gap-3">
             <button
