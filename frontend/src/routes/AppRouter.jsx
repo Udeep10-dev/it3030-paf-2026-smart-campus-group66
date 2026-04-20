@@ -30,7 +30,8 @@ function AppRouter() {
       {/* Bookings */}
       <Route path="/bookings/new" element={<BookingFormPage />} />
       <Route path="/booking/new" element={<BookingFormPage />} />
-      <Route path="/admin/bookings" element={<BookingListPage />} />
+      <Route path="/bookings" element={<BookingListPage mode="user" />} />
+      <Route path="/admin/bookings" element={<BookingListPage mode="admin" />} />
 
       {/* ticket */}
       <Route path="/tickets" element={<TicketListPage />} />

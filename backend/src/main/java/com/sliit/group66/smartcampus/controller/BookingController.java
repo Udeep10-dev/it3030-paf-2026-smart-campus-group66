@@ -3,6 +3,7 @@ package com.sliit.group66.smartcampus.controller;
 import com.sliit.group66.smartcampus.dto.booking.BookingCreateRequest;
 import com.sliit.group66.smartcampus.dto.booking.BookingDecisionRequest;
 import com.sliit.group66.smartcampus.dto.booking.BookingResponse;
+import com.sliit.group66.smartcampus.dto.booking.BookingUpdateRequest;
 import com.sliit.group66.smartcampus.enums.BookingStatus;
 import com.sliit.group66.smartcampus.service.BookingService;
 import java.util.List;
@@ -47,8 +48,27 @@ public class BookingController {
         return bookingService.cancel(id);
     }
 
+    @PutMapping("/{id}")
+    public BookingResponse update(
+            @PathVariable Long id,
+            @RequestBody BookingUpdateRequest req) {
+        return bookingService.update(id, req);
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        bookingService.delete(id);
+    }
+
     @GetMapping
     public List<BookingResponse> list(@RequestParam BookingStatus status) {
         return bookingService.getBookingsByStatus(status);
+    }
+
+    @GetMapping("/my")
+    public List<BookingResponse> listMyBookings(
+            @RequestParam BookingStatus status,
+            @RequestParam(defaultValue = "1") Long userId) {
+        return bookingService.getBookingsByStatusAndUserId(status, userId);
     }
 }

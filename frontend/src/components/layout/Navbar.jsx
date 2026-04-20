@@ -8,7 +8,8 @@ function Navbar() {
   const navItems = [
     { label: "Home", to: "/" },
     { label: "Resources", to: "/resources" },
-    { label: "Bookings", to: "/booking/new" },
+    { label: "My Bookings", to: "/bookings" },
+    { label: "New Booking", to: "/bookings/new" },
     { label: "Tickets", to: "/tickets" },
     { label: "Notifications", to: "/notifications" },
   ];

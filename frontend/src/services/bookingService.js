@@ -19,6 +19,10 @@ export const getBookingsByStatus = (status) => {
   return api.get(API_URL, { params: { status } });
 };
 
+export const getMyBookingsByStatus = (status, userId = 1) => {
+  return api.get(`${API_URL}/my`, { params: { status, userId } });
+};
+
 export const approveBooking = (id) => {
   return api.put(`${API_URL}/${id}/approve`);
 };
@@ -35,4 +39,12 @@ export const cancelBooking = (id) => {
     }
     throw error;
   });
+};
+
+export const deleteBooking = (id) => {
+  return api.delete(`${API_URL}/${id}`);
+};
+
+export const updateBooking = (id, data) => {
+  return api.put(`${API_URL}/${id}`, data);
 };

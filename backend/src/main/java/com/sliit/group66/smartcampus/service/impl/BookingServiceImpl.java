@@ -2,11 +2,14 @@ package com.sliit.group66.smartcampus.service.impl;
 
 import com.sliit.group66.smartcampus.dto.booking.BookingCreateRequest;
 import com.sliit.group66.smartcampus.dto.booking.BookingResponse;
+import com.sliit.group66.smartcampus.dto.booking.BookingUpdateRequest;
 import com.sliit.group66.smartcampus.entity.Booking;
 import com.sliit.group66.smartcampus.enums.BookingStatus;
+import com.sliit.group66.smartcampus.exception.BadRequestException;
 import com.sliit.group66.smartcampus.exception.ForbiddenOperationException;
 import com.sliit.group66.smartcampus.repository.BookingRepository;
 import com.sliit.group66.smartcampus.service.BookingService;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -68,8 +71,74 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public BookingResponse update(Long id, BookingUpdateRequest req) {
+        Booking booking = bookingRepository.findById(id).orElseThrow();
+
+        if (booking.getStatus() == BookingStatus.REJECTED || booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new ForbiddenOperationException("Rejected or cancelled bookings cannot be updated.");
+        }
+
+        Long resourceId = req.resourceId != null ? req.resourceId : booking.getResourceId();
+        java.time.LocalDate bookingDate = req.bookingDate != null ? req.bookingDate : booking.getBookingDate();
+        java.time.LocalTime startTime = req.startTime != null ? req.startTime : booking.getStartTime();
+        java.time.LocalTime endTime = req.endTime != null ? req.endTime : booking.getEndTime();
+        Integer expectedAttendees = req.expectedAttendees != null ? req.expectedAttendees : booking.getExpectedAttendees();
+        String purpose = req.purpose != null ? req.purpose.trim() : booking.getPurpose();
+
+        if (resourceId == null || bookingDate == null || startTime == null || endTime == null) {
+            throw new BadRequestException("Resource, booking date, start time, and end time are required.");
+        }
+
+        if (!startTime.isBefore(endTime)) {
+            throw new BadRequestException("Start time must be earlier than end time.");
+        }
+
+        boolean conflictExists = bookingRepository
+                .existsByResourceIdAndBookingDateAndStatusInAndStartTimeLessThanAndEndTimeGreaterThanAndIdNot(
+                        resourceId,
+                        bookingDate,
+                        Arrays.asList(BookingStatus.PENDING, BookingStatus.APPROVED),
+                        endTime,
+                        startTime,
+                        booking.getId()
+                );
+
+        if (conflictExists) {
+            throw new BadRequestException("Selected time slot conflicts with an existing booking.");
+        }
+
+        booking.setResourceId(resourceId);
+        booking.setBookingDate(bookingDate);
+        booking.setStartTime(startTime);
+        booking.setEndTime(endTime);
+        booking.setExpectedAttendees(expectedAttendees);
+        booking.setPurpose(purpose);
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    public void delete(Long id) {
+        Booking booking = bookingRepository.findById(id).orElseThrow();
+
+        if (booking.getStatus() != BookingStatus.REJECTED && booking.getStatus() != BookingStatus.CANCELLED) {
+            throw new ForbiddenOperationException("Only rejected or cancelled bookings can be deleted.");
+        }
+
+        bookingRepository.delete(booking);
+    }
+
+    @Override
     public List<BookingResponse> getBookingsByStatus(BookingStatus status) {
         return bookingRepository.findByStatus(status)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<BookingResponse> getBookingsByStatusAndUserId(BookingStatus status, Long userId) {
+        return bookingRepository.findByStatusAndUserId(status, userId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

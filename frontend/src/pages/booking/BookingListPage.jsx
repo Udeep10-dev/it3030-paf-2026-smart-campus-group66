@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   getBookingsByStatus,
+  getMyBookingsByStatus,
   approveBooking,
   rejectBooking,
-  cancelBooking
+  cancelBooking,
+  deleteBooking,
+  updateBooking,
 } from "../../services/bookingService";
+import resourceService from "../../services/resourceService";
 import "./BookingPages.css";
 
 const CANCELLED_BOOKING_IDS_KEY = "adminCancelledBookingIds";
@@ -31,7 +35,10 @@ const STATUS_TABS = [
   { key: "CANCELLED", label: "Cancelled" },
 ];
 
-function BookingListPage() {
+const formatTimeForInput = (value) => String(value || "").slice(0, 5);
+
+function BookingListPage({ mode = "admin" }) {
+  const isAdmin = mode === "admin";
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -40,6 +47,42 @@ function BookingListPage() {
   const [keywordFilter, setKeywordFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [cancelledBookingIds, setCancelledBookingIds] = useState(getStoredCancelledIds);
+  const [resourceInfoMap, setResourceInfoMap] = useState({});
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [editForm, setEditForm] = useState({
+    bookingDate: "",
+    startTime: "",
+    endTime: "",
+    expectedAttendees: "",
+    purpose: "",
+  });
+  const [editMessage, setEditMessage] = useState({ type: "", text: "" });
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  useEffect(() => {
+    const loadResources = async () => {
+      try {
+        const res = await resourceService.getAll();
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        const map = rows.reduce((acc, resource) => {
+          const key = String(resource?.id ?? "").trim();
+          if (!key) {
+            return acc;
+          }
+          acc[key] = {
+            name: resource?.name || `Resource #${key}`,
+            location: resource?.location || "-",
+          };
+          return acc;
+        }, {});
+        setResourceInfoMap(map);
+      } catch {
+        setResourceInfoMap({});
+      }
+    };
+
+    loadResources();
+  }, []);
 
   const filteredBookings = useMemo(() => {
     const keyword = keywordFilter.trim().toLowerCase();
@@ -49,13 +92,14 @@ function BookingListPage() {
         !keyword ||
         String(booking.id).includes(keyword) ||
         String(booking.resourceId).includes(keyword) ||
+        String(resourceInfoMap[String(booking.resourceId)]?.name || "").toLowerCase().includes(keyword) ||
         String(booking.purpose || "").toLowerCase().includes(keyword);
 
       const matchesDate = !dateFilter || booking.bookingDate === dateFilter;
 
       return matchesKeyword && matchesDate;
     });
-  }, [bookings, keywordFilter, dateFilter]);
+  }, [bookings, keywordFilter, dateFilter, resourceInfoMap]);
 
   useEffect(() => {
     window.localStorage.setItem(CANCELLED_BOOKING_IDS_KEY, JSON.stringify(cancelledBookingIds));
@@ -66,6 +110,12 @@ function BookingListPage() {
     setError(null);
 
     try {
+      if (!isAdmin) {
+        const res = await getMyBookingsByStatus(status, 1);
+        setBookings(Array.isArray(res?.data) ? res.data : []);
+        return;
+      }
+
       if (status === "CANCELLED") {
         const [cancelledRes, rejectedRes] = await Promise.all([
           getBookingsByStatus("CANCELLED"),
@@ -170,18 +220,105 @@ function BookingListPage() {
     }
   };
 
+  const handleDelete = async (bookingId) => {
+    const confirmed = window.confirm("Delete this booking permanently?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoadingId(bookingId);
+      setError(null);
+      await deleteBooking(bookingId);
+      await loadBookings(statusFilter, cancelledBookingIds);
+    } catch (err) {
+      console.error(err);
+      const backendMessage = err?.response?.data?.message;
+      setError(backendMessage || "Failed to delete booking");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const openEditModal = (booking) => {
+    setEditingBooking(booking);
+    setEditMessage({ type: "", text: "" });
+    setEditForm({
+      bookingDate: booking.bookingDate || "",
+      startTime: formatTimeForInput(booking.startTime),
+      endTime: formatTimeForInput(booking.endTime),
+      expectedAttendees: booking.expectedAttendees ?? "",
+      purpose: booking.purpose || "",
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingBooking(null);
+    setEditMessage({ type: "", text: "" });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!editingBooking) {
+      return;
+    }
+
+    if (!editForm.bookingDate || !editForm.startTime || !editForm.endTime || !editForm.expectedAttendees || !editForm.purpose.trim()) {
+      setEditMessage({ type: "error", text: "Please fill all required fields." });
+      return;
+    }
+
+    if (editForm.startTime >= editForm.endTime) {
+      setEditMessage({ type: "error", text: "Start time must be earlier than end time." });
+      return;
+    }
+
+    try {
+      setEditSubmitting(true);
+      setEditMessage({ type: "", text: "" });
+
+      await updateBooking(editingBooking.id, {
+        resourceId: editingBooking.resourceId,
+        bookingDate: editForm.bookingDate,
+        startTime: editForm.startTime,
+        endTime: editForm.endTime,
+        expectedAttendees: Number(editForm.expectedAttendees),
+        purpose: editForm.purpose.trim(),
+      });
+
+      closeEditModal();
+      await loadBookings(statusFilter, cancelledBookingIds);
+    } catch (err) {
+      console.error(err);
+      const backendMessage = err?.response?.data?.message;
+      setEditMessage({
+        type: "error",
+        text: backendMessage || "Failed to update booking",
+      });
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   return (
     <div className="booking-page booking-page-list">
       <div className="booking-page-glow" />
       <div className="booking-card booking-list-card">
         <div className="booking-list-header">
           <div>
-            <h2 className="booking-title">Admin Bookings</h2>
-            <p className="booking-subtitle">View bookings by status and process pending requests.</p>
+            <h2 className="booking-title">{isAdmin ? "Admin Bookings" : "My Bookings"}</h2>
+            <p className="booking-subtitle">
+              {isAdmin
+                ? "View bookings by status and process pending requests."
+                : "View your bookings and edit pending or approved requests."}
+            </p>
           </div>
-          <button className="booking-secondary-btn" onClick={() => loadBookings(statusFilter)}>
-            Refresh
-          </button>
         </div>
 
         <div className="booking-status-tabs" role="tablist" aria-label="Booking status filters">
@@ -236,8 +373,14 @@ function BookingListPage() {
 
         <div className="booking-list-grid">
           {!loading &&
-            filteredBookings.map((booking) => (
-              <article key={booking.id} className="booking-item">
+            filteredBookings.map((booking) => {
+              const resourceIdText = String(booking.resourceId || "");
+              const resourceInfo = resourceInfoMap[resourceIdText];
+              const resourceName = resourceInfo?.name || `Resource #${resourceIdText}`;
+              const resourceLocation = resourceInfo?.location || "-";
+
+              return (
+                <article key={booking.id} className="booking-item">
                 <div className="booking-item-head">
                   <h3>Booking #{booking.id}</h3>
                   <span className={`booking-chip booking-chip-${booking.status?.toLowerCase() || "pending"}`}>
@@ -245,14 +388,16 @@ function BookingListPage() {
                   </span>
                 </div>
 
-                <p><strong>Resource:</strong> {booking.resourceId}</p>
+                <p><strong>Resource:</strong> {resourceName}</p>
+                <p><strong>Resource ID:</strong> {booking.resourceId}</p>
+                <p><strong>Location:</strong> {resourceLocation}</p>
                 <p><strong>Date:</strong> {booking.bookingDate}</p>
                 <p>
                   <strong>Time:</strong> {booking.startTime} - {booking.endTime}
                 </p>
                 <p><strong>Purpose:</strong> {booking.purpose}</p>
 
-                {statusFilter === "PENDING" ? (
+                {isAdmin && statusFilter === "PENDING" ? (
                   <div className="booking-actions">
                     <button
                       onClick={() => handleApprove(booking.id)}
@@ -272,7 +417,7 @@ function BookingListPage() {
                   </div>
                 ) : null}
 
-                {statusFilter === "APPROVED" ? (
+                {isAdmin && statusFilter === "APPROVED" ? (
                   <div className="booking-actions">
                     <button
                       onClick={() => handleCancel(booking.id)}
@@ -283,9 +428,128 @@ function BookingListPage() {
                     </button>
                   </div>
                 ) : null}
-              </article>
-            ))}
+
+                {isAdmin && (statusFilter === "REJECTED" || statusFilter === "CANCELLED") ? (
+                  <div className="booking-actions">
+                    <button
+                      onClick={() => handleDelete(booking.id)}
+                      className="booking-danger-btn"
+                      disabled={actionLoadingId === booking.id}
+                    >
+                      {actionLoadingId === booking.id ? "Processing..." : "Delete"}
+                    </button>
+                  </div>
+                ) : null}
+
+                {!isAdmin && (statusFilter === "PENDING" || statusFilter === "APPROVED") ? (
+                  <div className="booking-actions">
+                    <button
+                      onClick={() => openEditModal(booking)}
+                      className="booking-secondary-btn"
+                      disabled={actionLoadingId === booking.id}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ) : null}
+                </article>
+              );
+            })}
         </div>
+
+        {!isAdmin && editingBooking ? (
+          <div className="booking-modal-overlay" role="presentation" onClick={closeEditModal}>
+            <div
+              className="booking-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="booking-edit-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="booking-modal-header">
+                <div>
+                  <h3 id="booking-edit-title" className="booking-title">Edit Booking #{editingBooking.id}</h3>
+                  <p className="booking-subtitle">Update the booking date, time, attendees, or purpose.</p>
+                </div>
+                <button type="button" className="booking-modal-close" onClick={closeEditModal}>
+                  ×
+                </button>
+              </div>
+
+              {editMessage.text ? (
+                <p className={`booking-message booking-message-${editMessage.type}`}>{editMessage.text}</p>
+              ) : null}
+
+              <form className="booking-modal-form" onSubmit={handleEditSubmit}>
+                <label className="booking-field">
+                  <span>Booking Date</span>
+                  <input
+                    type="date"
+                    name="bookingDate"
+                    value={editForm.bookingDate}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </label>
+
+                <label className="booking-field">
+                  <span>Start Time</span>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={editForm.startTime}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </label>
+
+                <label className="booking-field">
+                  <span>End Time</span>
+                  <input
+                    type="time"
+                    name="endTime"
+                    value={editForm.endTime}
+                    onChange={handleEditChange}
+                    required
+                  />
+                </label>
+
+                <label className="booking-field">
+                  <span>Expected Attendees</span>
+                  <input
+                    type="number"
+                    name="expectedAttendees"
+                    value={editForm.expectedAttendees}
+                    onChange={handleEditChange}
+                    min="1"
+                    step="1"
+                    required
+                  />
+                </label>
+
+                <label className="booking-field booking-field-wide">
+                  <span>Purpose</span>
+                  <textarea
+                    name="purpose"
+                    value={editForm.purpose}
+                    onChange={handleEditChange}
+                    rows={4}
+                    required
+                  />
+                </label>
+
+                <div className="booking-modal-actions">
+                  <button type="button" className="booking-secondary-btn" onClick={closeEditModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="booking-primary-btn" disabled={editSubmitting}>
+                    {editSubmitting ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
