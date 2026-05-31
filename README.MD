@@ -210,13 +210,6 @@ Full API documentation available at `http://localhost:8080/swagger-ui.html` (onc
 
 **Group 62** - PAF IT3030 Project
 
-Members:
-https://github.com/vishanisomarathna-sys
-https://github.com/Tenu234
-https://github.com/Udeep10-dev
-https://github.com/rashmigimhani
-
----
 
 ## 📝 License
 
